@@ -6,6 +6,20 @@
 // general structure definition
 typedef union
 {
+	u32 CPSR_32bits;
+    struct 
+    {
+		u32		reserved		: 28;	// Bit[0:27]
+		u32 	V				: 1;	// Bit[29] 
+		u32 	C				: 1;	// Bit[29] 
+		u32		Z				: 1;	// Bit[30]
+		u32		N				: 1;	// Bit[31]
+    } CPSR_Bits;    
+} CPSR_type;
+
+
+typedef union
+{
     u32 instr_32bits;
     struct 
     {
@@ -97,12 +111,15 @@ typedef union
 		u32 	bit2726		: 2;	// Bit[27:26]	01
 		u32 	Cond		: 4; 	// Bit[31:28]
 	} SingleDataTransfer;
-	struct
-	{
-		u32		Offset 		: 24;	// Bit[23:0]
-		u32 	bit2524		: 2;	// Bit[25:24]
-		u32 	bit2726		: 2;	// Bit[27:26]	01
-		u32 	Cond		: 4; 	// Bit[31:28]
-	} Branch;
+  
+  struct
+    {
+        u32     Offset      : 23;   // Bit[22:0]
+        u32        Sign         : 1;    // Bit[23]
+        u32     bit2524        : 2;    // Bit[25:24]
+        u32     bit2726        : 2;    // Bit[27:26]    01
+        u32     Cond        : 4;     // Bit[31:28]
+    } Branch;
+  
 } instruction;
 
