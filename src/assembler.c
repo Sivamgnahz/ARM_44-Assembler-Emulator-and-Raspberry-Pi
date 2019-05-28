@@ -1,8 +1,10 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "assembler_types.h"
 #include "assembler.h"
 
-int main(int argc, char *argv) {
+int main(int argc, char *argv[]) {
   FILE *fp;
   FILE *fpw;
   char line[100];
@@ -27,19 +29,28 @@ int main(int argc, char *argv) {
 	  ||strcmp(token,"eor")==0
 	  ||strcmp(token,"oor")==0
 	  ){
-	  	fprintf(fpw, "%s\n", data_pro1(strtok(line, "\n")));
+		char *pro1 = data_pro1(line);
+	  	fprintf(fpw, "%s\n", pro1);
+		printf("%s\n", pro1);
+		free(pro1);
       }else if (strcmp(token,"mov")==0){
-      	fprintf(fpw, "%s\n", data_pro2(strtok(line, "\n")));
+		char *pro2 = data_pro2(line);
+      		fprintf(fpw, "%s\n", pro2);
+		printf("%s\n", pro2);
+		free(pro2);
       }else if (strcmp(token,"tst")==0
 		||strcmp(token,"teq")==0
 		||strcmp(token,"cmp")==0){
-      	fprintf(fpw, "%s\n", data_pro3(strtok(line, "\n")));
+		char *pro3 = data_pro3(line);
+      		fprintf(fpw, "%s\n", pro3);
+		printf("%s\n", pro3);
+		free(pro3);
       }else if (strcmp(token,"mul")==0
 		||strcmp(token,"mla")==0){
-      	fprintf(fpw, "%s\n", multiply(strtok(line, "\n")));
+      	fprintf(fpw, "%s\n", multiply(line));
       }else if (strcmp(token,"ldr")==0
 		||strcmp(token,"str")==0){
-      	fprintf(fpw, "%s\n", data_transfer(strtok(line, "\n"));
+      	fprintf(fpw, "%s\n", data_transfer(line));
       }else if (strcmp(token,"beq")==0
 		||strcmp(token,"bne")==0
 		||strcmp(token,"bge")==0
@@ -47,17 +58,18 @@ int main(int argc, char *argv) {
 		||strcmp(token,"bgt")==0
 		||strcmp(token,"ble")==0
 		||strcmp(token,"b")==0){
-		fprintf(fpw, "%s\n", branch(strtok(line, "\n"));
+		fprintf(fpw, "%s\n", branch(line));
       }else{
-      	fprintf(fpw, "%s\n", special(strtok(line, "\n"));
+      	fprintf(fpw, "%s\n", special(line));
       }
       fclose(fp);
       fclose(fpw);
       fflush(fpw);
     }
-  return EXIT_SUCCESS;
+  return 0;
 }
 
+// Process and, eor, sub, rsb, add, orr
 char * data_pro1(char *instruction){
 
 	char *p;
@@ -66,60 +78,79 @@ char * data_pro1(char *instruction){
 	char rn[3] = "";
 	char operand2[5] = "";
 
+	// Split instruction into opcode, rd, rn, operand2
 	p = strtok(instruction, " ");
 	if (p) {
 		strcat(opcode, p);
 	}
-	p = strtok(NULL, ",");
+	p = strtok(NULL, " ");
 	if (p) {
 		strcat(rd, p);
 	}
-	p = strtok(NULL, ",");
+	p = strtok(NULL, " ");
 	if (p) {
 		strcat(rn, p);
 	}
-	p = strtok(NULL, ",");
+	p = strtok(NULL, " ");
 	if (p) {
 		strcat(operand2, p);
 	}
 
+	// Convert opcode to binary string
 	char binOpcode[4] = "";
 
 	if (strcmp(opcode,"and")==0) {
-		strcpy(binOpcode, &(toBits(assembler_types.OPCODE.AND)[28]));
+		char *and = toBits(AND);
+		strcpy(binOpcode, &(and[28]));
+		free(and);
 	}
 	if (strcmp(opcode,"eor")==0) {
-		strcpy(binOpcode, &(toBits(assembler_types.OPCODE.EOR)[28]));
+		char *eor = toBits(EOR);
+		strcpy(binOpcode, &(eor[28]));
+		free(eor);
 	}
 	if (strcmp(opcode,"sub")==0) {
-		strcpy(binOpcode, &(toBits(assembler_types.OPCODE.SUB)[28]));
+		char *sub = toBits(SUB);
+		strcpy(binOpcode, &(sub[28]));
+		free(sub);
 	}
 	if (strcmp(opcode,"rsb")==0) {
-		strcpy(binOpcode, &(toBits(assembler_types.OPCODE.RSB)[28]));
+		char *rsb = toBits(RSB);
+		strcpy(binOpcode, &(rsb[28]));
+		free(rsb);
 	}
 	if (strcmp(opcode,"add")==0) {
-		strcpy(binOpcode, &(toBits(assembler_types.OPCODE.ADD)[28]));
+		char *add = toBits(ADD);
+		strcpy(binOpcode, &(add[28]));
+		free(add);
 	}
 	if (strcmp(opcode,"orr")==0) {
-		strcpy(binOpcode, &(toBits(assembler_types.OPCODE.ORR)[28]));
+		char *orr = toBits(ORR);
+		strcpy(binOpcode, &(orr[28]));
+		free(orr);
 	}
 
+	// Convert rd to binary string
 	char binRd[4] = "";
-	strcpy(binRd, &(toBits(atoi(strcpy(rd, &rd[1])))[28]));
+	char *reg1 = regtoBits(rd);
+	strcpy(binRd, reg1);
+	free(reg1);
 
+	// Convert rn to binary string
 	char binRn[4] = "";
-	strcpy(binRn, &(toBits(atoi(strcpy(rn, &rn[1])))[28]));
+	char *reg2 = regtoBits(rn);
+	strcpy(binRn, reg2);
+	free(reg2);
 
-	char binOperand2[12] = "0000";
-	if (operand2[1] == '0' && operand2[2] == 'x') {
-		strcat(binOperand2, hextoBits(strcpy(operand2, &operand2[3])));
-	} else {
-		char to8Bits[8] = "";
-		strcpy(to8Bits, &(toBits(atoi(strcpy(operand2, &operand2[1])))[24]));
-		strcat(binOperand2, to8Bits);
-	}
+	// Convert operand2 to binary string
+	char binOperand2[12] = "";
+	char *imm = immtoBits(operand2);
+	strcpy(binOperand2, imm);
+	free(imm);
 
-	char bits[32] = "1110001";
+	// Concatenate into single binary string
+	char *bits = malloc(32 * sizeof(char));
+	strcpy(bits, "1110001");
 	strcat(bits, binOpcode);
 	strcat(bits, "0");
 	strcat(bits, binRn);
@@ -129,24 +160,158 @@ char * data_pro1(char *instruction){
 	return bits;
 }
 
-char * toBits(unsigned int x) {
-	char bits[32] = "";
-	int i; 
-	uint32_t mask = 1 << 31;
-	for(i=0; i<32; ++i) { 
-		if((x & mask) == 0){ 
-			strcat(bits, "0");
-		} else { 
-			strcat(bits, "1"); 
-		} 
-		x = x << 1; 
-	} 
-	strcat(bits, "\n");
+// Process mov
+char * data_pro2(char *instruction) {
+
+	char *p;
+	char rd[3] = "";
+	char operand2[5] = "";
+
+	// Split instruction into mov, rd, operand2
+	p = strtok(instruction, " ");
+	p = strtok(NULL, " ");
+	if (p) {
+		strcat(rd, p);
+	}
+	p = strtok(NULL, " ");
+	if (p) {
+		strcat(operand2, p);
+	}
+
+	// Convert rd to binary string
+	char binRd[4] = "";
+	char *reg1 = regtoBits(rd);
+	strcpy(binRd, reg1);
+	free(reg1);
+
+	// Convert operand2 to binary string
+	char binOperand2[12] = "";
+	char *imm = immtoBits(operand2);
+	strcpy(binOperand2, imm);
+	free(imm);
+
+	// Concatenate into single binary string
+	char *bits = malloc(32 * sizeof(char));
+	strcpy(bits, "111000111010");
+	strcat(bits, binRd);
+	strcat(bits, binOperand2);
+
 	return bits;
 }
 
+// Process tst, teq, cmp
+char * data_pro3(char *instruction) {
+
+	char *p;
+	char opcode[3] = "";
+	char rn[3] = "";
+	char operand2[5] = "";
+
+	// Split instruction into opcode, rn, operand2
+	p = strtok(instruction, " ");
+	if (p) {
+		strcat(opcode, p);
+	}
+	p = strtok(NULL, " ");
+	if (p) {
+		strcat(rn, p);
+	}
+	p = strtok(NULL, " ");
+	if (p) {
+		strcat(operand2, p);
+	}
+
+	// Convert opcode to binary string
+	char binOpcode[4] = "";
+
+	if (strcmp(opcode,"tst")==0) {
+		char *tst = toBits(TST);
+		strcpy(binOpcode, &(tst[28]));
+		free(tst);
+	}
+	if (strcmp(opcode,"teq")==0) {
+		char *teq = toBits(TEQ);
+		strcpy(binOpcode, &(teq[28]));
+		free(teq);
+	}
+	if (strcmp(opcode,"cmp")==0) {
+		char *cmp = toBits(CMP);
+		strcpy(binOpcode, &(cmp[28]));
+		free(cmp);
+	}
+
+	// Convert rn to binary string
+	char binRn[4] = "";
+	char *reg2 = regtoBits(rn);
+	strcpy(binRn, reg2);
+	free(reg2);
+
+	// Convert operand2 to binary string
+	char binOperand2[12] = "";
+	char *imm = immtoBits(operand2);
+	strcpy(binOperand2, imm);
+	free(imm);
+
+	// Concatenate into single binary string
+	char *bits = malloc(32 * sizeof(char));
+	strcpy(bits, "1110001");
+	strcat(bits, binOpcode);
+	strcat(bits, "1");
+	strcat(bits, binRn);
+	strcat(bits, "0000");
+	strcat(bits, binOperand2);
+
+	return bits;
+}
+
+// Convert register to binary string
+char * regtoBits(char *reg) {
+	char *binReg = malloc(4 * sizeof(char));
+	char *bits = toBits(atoi(strcpy(reg, &reg[1])));
+	strcpy(binReg, &(bits[28]));
+	free(bits);
+	return binReg;
+}
+
+// Convert immediate value to binary string
+char * immtoBits(char *operand2) {
+	char *binOperand2 = malloc(12 * sizeof(char));
+	strcpy(binOperand2, "0000");
+	if (operand2[1] == '0' && operand2[2] == 'x') {
+		char *bits1 = hextoBits(strcpy(operand2, &operand2[3]));
+		strcat(binOperand2, bits1);
+		free(bits1);
+	} else {
+		char to8Bits[8] = "";
+		char *bits2 = toBits(atoi(strcpy(operand2, &operand2[1])));
+		strcpy(to8Bits, &(bits2[24]));
+		free(bits2);
+		strcat(binOperand2, to8Bits);
+	}
+	return binOperand2;
+}
+
+// Convert int to binary string
+char * toBits(unsigned int x) {
+	char *bits = malloc(32 * sizeof(char));
+	int i; 
+	unsigned int mask = 1 << 31;
+	for(i=0; i<32; ++i) { 
+		if((x & mask) == 0){ 
+			bits[i] = 0;
+		} else { 
+			bits[i] = 1;
+		} 
+		x = x << 1; 
+	} 
+	return bits;
+}
+
+// Convert hex to binary string
 char * hextoBits(char *hex) {
-	char bin[8] = "";
+	char *bin = malloc(8 * sizeof(char));
+	bin[0] = '\0';
+	int i;
 	for(i=0; hex[i]!='\0'; i++)
     {
         switch(hex[i])
@@ -210,4 +375,20 @@ char * hextoBits(char *hex) {
         }
     }
     return bin;
+}
+
+char * multiply() {
+	return NULL;
+}
+
+char * data_transfer() {
+	return NULL;
+}
+
+char * branch() {
+	return NULL;
+}
+
+char * special() {
+	return NULL;
 }
