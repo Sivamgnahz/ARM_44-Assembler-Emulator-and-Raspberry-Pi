@@ -1,13 +1,15 @@
 int main();
 
-int check_cond(int cond);
+char * data_pro1(char *instruction);
+char * data_pro2(char *instruction);
+char * data_pro3(char *instruction);
 
-int data_pro1();
-int data_pro2();
-int date_pro3();
-int multiply();
-int data_transfer();
-int branch();
-int special();
+char * regtoBits(char *reg);
+char * immtoBits(char *operand2);
+char * toBits(unsigned int x);
+char * hextoBits(char *hex);
 
-int get_opcode(char* mnemonic)
+char * multiply();
+char * data_transfer();
+char * branch();
+char * special();
