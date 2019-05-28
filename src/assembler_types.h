@@ -4,7 +4,7 @@
 
 typedef struct instruction{
   char *mnemonic;
-  u32 operamd2;
+  u32 operand2;
   u32 rd;
   u32 rn;
   u32 rs;
@@ -13,7 +13,7 @@ typedef struct instruction{
   u32 expression;
 } instruct;
 
-typedef enum {
+enum Opcode {
   AND = 0,
   EOR = 1,
   SUB = 2,
@@ -24,9 +24,9 @@ typedef enum {
   CMP = 10,
   ORR = 12,
   MOV = 13
-} OPCODE;
+};
 
-enum {
+enum Check {
   eq = 0,
   ne = 1,
   ge = 10,
