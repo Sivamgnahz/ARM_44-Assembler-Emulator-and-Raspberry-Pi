@@ -378,7 +378,70 @@ char * hextoBits(char *hex) {
 }
 
 char * multiply() {
-	return NULL;
+    char *p;
+	char *instr;
+	char rd[3] = "";
+	char rn[3] = "";
+	char rs[3] = "";
+	char rm[3] = "";
+	char operand2[5] = "";
+	char bits[32] = "1110";
+	char bina;
+	char bins = "0";
+
+
+	p = strtok(instruction, "\n");
+	if (p) {
+		strcat(instr, p);
+	}
+
+
+	p = strtok(NULL, "\n");
+	if (p) {
+		strcat(rd, p);
+	}
+	p = strtok(NULL, "\n");
+	if (p) {
+		strcat(rm, p);
+	}
+	p = strtok(NULL, "\n");
+	if (p) {
+		strcat(rs, p);
+	}
+	p = strtok(NULL, "\n");
+	if (p) {
+		strcat(rn, p);
+	}
+
+
+	if (strcmp(instr,"mul")==0) {
+		strcpy(bina, "0");
+	}
+	if (strcmp(instr,"mla")==0) {
+		strcpy(bina, "1");
+	}
+
+	char binRd[4] = "";
+	strcpy(binRd, &(toBits(atoi(strcpy(rd, &rd[1])))[28]));
+
+	char binRn[4] = "";
+	strcpy(binRn, &(toBits(atoi(strcpy(rn, &rn[1])))[28]));
+
+	char binRs[4] = "";
+	strcpy(binRs, &(toBits(atoi(strcpy(rs, &rs[1])))[28]));
+
+	char binRm[4] = "";
+	strcpy(binRm, &(toBits(atoi(strcpy(rm, &rm[1])))[28]));
+
+	strcat(bits, bina);
+	strcat(bits, bins);
+	strcat(bits, binRd);
+	strcat(bits, binRn);
+	strcat(bits, binRs);
+	strcat(bits, "1001");
+	strcat(bits, binRm);
+	return bits;
+	
 }
 
 char * data_transfer() {
