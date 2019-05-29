@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include "emulate_struct.h"
 #include "emulate.h"
-
 // 0b1011
 uint8_t memory[65536] = {0};  //initialise to 0, store instructions and data
 uint32_t reg[17] = {0};  //0-12, 15, 16 are useful, store registers
@@ -16,6 +15,7 @@ uint32_t add_carry_out = 0;
 FILE* fplog = NULL;//xj
 uint32_t instruction_is_branch =0;  
 uint32_t  if_pc_result =0;
+int PIN = 0;
 
 int main(int argc, char *argv[]) {	
   FILE *file = fopen(argv[1], "rb");  //rb means read binary
@@ -25,6 +25,17 @@ int main(int argc, char *argv[]) {
   while(fread(buffer, sizeof(uint8_t), 1, file) == 1){  
     memory[counter++] = *buffer;  //store instructions into the memory
   }
+
+  // printf("Rasberry Pi blink\n");
+  // wiringPiSetuoGpio();
+  // pinMode(LED, OUTPUT);
+  // for(int x = 0;x<4;x++){
+  //   digitalWrite(LED, 1);
+  //   delay(500);
+  //   digitalWrite(LED, 0);
+  //   delay(500); 
+  // }
+
   while (1) {
     readInstruction();
     if (!instr.instr_32bits) {
@@ -188,7 +199,6 @@ void set_C(int result) { //data processing helper function
   case 12:
   case 13:
     CPSR.CPSR_Bits.C = shift_carry_out; 
-    break;
   case 4:
     CPSR.CPSR_Bits.C = add_carry_out; 
     break;
@@ -361,7 +371,11 @@ void single_data_load(uint32_t rn){
     } else {
       	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn));
     }
-	} 
+	} else {
+    if (if_in_pin_area(rn)){
+        write_register(instr.SingleDataTransfer.Rd, rn);
+    }
+  } 
 
 }
 
@@ -374,7 +388,7 @@ void single_data_store(uint32_t rn){
     for(int i = 0; i<4;i++){
         	memory[rn+i] = build_mask(result, i*8,8);
     }
-    }
+    } 
 }
 
 uint32_t get_offset(){
@@ -397,9 +411,33 @@ uint32_t get_offset(){
   return value;
 }
 
+int if_in_pin_area(uint32_t memory_address){
+  if(memory_address == 0x20200008
+  || memory_address == 0x20200004
+  || memory_address == 0x20200000){
+    return 1;
+  } else{
+   return 0;
+   }
+
+}
+
+int if_in_control_area(uint32_t memory_address){
+  if(memory_address == 0x20200028
+  || memory_address == 0x2020001c){
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void clear_pin(){
+  PIN = 0;
+  }
+
 uint32_t add_sub_offset(){
     
-  uint32_t result = read_register(instr.SingleDataTransfer.Rn);
+  uint32_t result = read_register(instr.SingleDataTransfer.Rn); //result is the memory address in register
   //int offset = get_offset(instr)*4;
   uint32_t offset = get_offset();
  
@@ -409,8 +447,34 @@ uint32_t add_sub_offset(){
     result -= offset;
   }
   if(result>0x10000){
-  	printf("Error: Out of bounds memory access at address 0x%08x\n",result);
+    
+    if (if_in_pin_area(result)){
+        if(result == 0x20200008){
+     printf("One GPIO pin from 20 to 29 has been accessed\n");
+  } else if(result == 0x20200004){
+    printf("One GPIO pin from 10 to 19 has been accessed\n");
+  } else if( result == 0x20200000){
+    printf("One GPIO pin from 0 to 9 has been accessed\n");
+  } else{
+   return 0;
+   }
+
+    }else if(if_in_control_area(result)){
+        if(result == 0x20200028){
+    clear_pin();
+    printf("PIN OFF\n");
+  } else if(result == 0x2020001c){
+    clear_pin();
+    printf("PIN ON\n");
+    PIN = 1;
+  } else {
+    return 0;
   }
+    } else {
+      printf("Error: Out of bounds memory access at address 0x%08x\n",result);
+    }      
+  
+  } 
   return result;
  
 }

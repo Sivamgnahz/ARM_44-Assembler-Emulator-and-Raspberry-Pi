@@ -38,4 +38,10 @@ uint32_t get_4bit_memory(uint32_t start_point);
 uint32_t build_mask(uint32_t instr, uint32_t start_point, uint32_t length);
 void readInstruction();
 
+//PIN
+int if_in_pin_area(uint32_t memory_address);
+int if_in_control_area(uint32_t memory_address);
+void clear_pin();
+
+
 
