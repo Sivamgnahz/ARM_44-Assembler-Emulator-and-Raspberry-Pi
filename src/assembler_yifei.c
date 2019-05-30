@@ -377,75 +377,114 @@ char * hextoBits(char *hex) {
     return bin;
 }
 
-char * multiply() {
-    char *p;
-	char *instr;
-	char rd[3] = "";
-	char rn[3] = "";
-	char rs[3] = "";
-	char rm[3] = "";
-	char operand2[5] = "";
-	char bits[32] = "1110";
-	char bina;
-	char bins = "0";
+//char * multiply() {
+//    char *p;
+//	char *instr;
+//	char rd[3] = "";
+//	char rn[3] = "";
+//	char rs[3] = "";
+//	char rm[3] = "";
+//	char operand2[5] = "";
+//	char bits[32] = "1110";
+//	char bina;
+//	char bins = "0";
+//
+//
+//	p = strtok(instruction, "\n");
+//	if (p) {
+//		strcat(instr, p);
+//	}
+//
+//
+//	p = strtok(NULL, "\n");
+//	if (p) {
+//		strcat(rd, p);
+//	}
+//	p = strtok(NULL, "\n");
+//	if (p) {
+//		strcat(rm, p);
+//	}
+//	p = strtok(NULL, "\n");
+//	if (p) {
+//		strcat(rs, p);
+//	}
+//
+//	if (strcmp(instr,"mul")==0) {
+//		strcpy(bina, "0");
+//	}
+//	if (strcmp(instr,"mla")==0) {
+//        p = strtok(NULL, "\n");
+//        if (p) {
+//            strcat(rn, p);
+//        }
+//		strcpy(bina, "1");
+//	}
+//
+//	char binRd[4] = "";
+//	strcpy(binRd, &(toBits(atoi(strcpy(rd, &rd[1])))[28]));
+//
+//	char binRn[4] = "";
+//	strcpy(binRn, &(toBits(atoi(strcpy(rn, &rn[1])))[28]));
+//
+//	char binRs[4] = "";
+//	strcpy(binRs, &(toBits(atoi(strcpy(rs, &rs[1])))[28]));
+//
+//	char binRm[4] = "";
+//	strcpy(binRm, &(toBits(atoi(strcpy(rm, &rm[1])))[28]));
+//
+//	strcat(bits, bina);
+//	strcat(bits, bins);
+//	strcat(bits, binRd);
+//	strcat(bits, binRn);
+//	strcat(bits, binRs);
+//	strcat(bits, "1001");
+//	strcat(bits, binRm);
+//	return bits;
+//
+//}
 
+u_int32_t multiply(instruct ins){
+    u_int32_t cond  = 1110;
+    u_int32_t rd  = ins.rd;
+    u_int32_t rn = ins.rn;
+    u_int32_t rs = ins.rs;
+    u_int32_t rm = ins.rm;
+    u_int32_t a = 0;
+    u_int32_t s = 0;
+    if (ins.mnemonic[1] == 'l'){
+        u_int32_t a = 1;
+    }
+    cond <<= 28;
+    a <<= 21;
+    s <<= 20;
+    rn <<= 12;
+    rd <<= 16;
+    rs <<= 8;
 
-	p = strtok(instruction, "\n");
-	if (p) {
-		strcat(instr, p);
-	}
-
-
-	p = strtok(NULL, "\n");
-	if (p) {
-		strcat(rd, p);
-	}
-	p = strtok(NULL, "\n");
-	if (p) {
-		strcat(rm, p);
-	}
-	p = strtok(NULL, "\n");
-	if (p) {
-		strcat(rs, p);
-	}
-	p = strtok(NULL, "\n");
-	if (p) {
-		strcat(rn, p);
-	}
-
-
-	if (strcmp(instr,"mul")==0) {
-		strcpy(bina, "0");
-	}
-	if (strcmp(instr,"mla")==0) {
-		strcpy(bina, "1");
-	}
-
-	char binRd[4] = "";
-	strcpy(binRd, &(toBits(atoi(strcpy(rd, &rd[1])))[28]));
-
-	char binRn[4] = "";
-	strcpy(binRn, &(toBits(atoi(strcpy(rn, &rn[1])))[28]));
-
-	char binRs[4] = "";
-	strcpy(binRs, &(toBits(atoi(strcpy(rs, &rs[1])))[28]));
-
-	char binRm[4] = "";
-	strcpy(binRm, &(toBits(atoi(strcpy(rm, &rm[1])))[28]));
-
-	strcat(bits, bina);
-	strcat(bits, bins);
-	strcat(bits, binRd);
-	strcat(bits, binRn);
-	strcat(bits, binRs);
-	strcat(bits, "1001");
-	strcat(bits, binRm);
-	return bits;
-	
+    return cond | a | s | rd | rn | rs | 9 <<= 4 | rm;
 }
 
-char * data_transfer() {
-	return NULL;
+u_int32_t data_transfer(instruct ins) {
+    u_int32_t rd, rn,l,p, offset;
+    p = 1;
+    u = 1;
+    if (ins.mnemonic[0] == 'l'){
+        if (ins.operand2 < 0xff){ // when the size of operand2 is within 4 bytes, it acts like mov
+            ins.mnemonic = strdup("mov");
+            data_pro2(ins);
+            breaks;
+        } else {
+            rn = 15;// PC = 15; And rn = PC;
+            l = 1;
+            rd = ins.rd;
+            offset = 8;// size of instruction * 4 - 8; temperately can't figure out the size of instr
+        }
+        rn <<= 16;
+        p <<= 24;
+        u <<= 23;
+
+    }
+    return  1 <<= 26 | i | p | u |  l | rn | rd | offset;
 }
 
 char * branch() {

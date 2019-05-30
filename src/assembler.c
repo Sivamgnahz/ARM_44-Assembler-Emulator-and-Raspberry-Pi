@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
   char *op1, *op2,*op3, label;
   int program[1000];
   int cnt = 0; // holds the address of the machine code instruction
+  instruct ins;
 
 
   
@@ -25,6 +26,7 @@ int main(int argc, char *argv[]) {
   while (fgets(line, sizeof(line),fp) != NULL)
     {
       token = strtok(line, "\n\t\r ");
+      ins.mnemonic = token;
       if (strcmp(token,"add")==0
 	  ||strcmp(token,"sub")==0
 	  ||strcmp(token,"rsb")==0
@@ -41,10 +43,23 @@ int main(int argc, char *argv[]) {
 		pro[count] = data_pro3(line);
       }else if (strcmp(token,"mul")==0
 		||strcmp(token,"mla")==0){
-      	fprintf(fpw, "%s\n", multiply(line));
+          ins.rd = regtoBits(strtok(NULL, "\n"));
+          ins.rm = regtoBits(strtok(NULL, "\n"));
+          ins.rs = regtoBits(strtok(NULL, "\n"));
+          ins.mnemonic = "mul";
+          if (token[1] == 'l'){
+              ins.rn = regtoBits(strtok(NULL, "\n"));
+              ins.mnemonic = "mla";
+          }
+      	fprintf(fpw, "%s\n", multiply(ins));
       }else if (strcmp(token,"ldr")==0
 		||strcmp(token,"str")==0){
-      	fprintf(fpw, "%s\n", data_transfer(line));
+          ins.rd = regtoBits(strtok(NULL, "\n"));
+          ins.operand2 = immtoBits(strtok(NULL, "\n"))
+          if (token[0] == 's'){
+              ins.rm = ins.operand2;
+          }
+      	fprintf(fpw, "%s\n", data_transfer(ins));
       }else if (strcmp(token,"beq")==0
 		||strcmp(token,"bne")==0
 		||strcmp(token,"bge")==0
@@ -321,13 +336,59 @@ char * hextoBits(char *hex) {
 }
 */
 
-char * multiply() {
-	return NULL;
+//char * multiply() {
+//	return NULL;
+//}
+//
+//char * data_transfer() {
+//	return NULL;
+//}
+u_int32_t multiply(instruct ins){
+    u_int32_t cond  = 1110;
+    u_int32_t rd  = ins.rd;
+    u_int32_t rn = ins.rn;
+    u_int32_t rs = ins.rs;
+    u_int32_t rm = ins.rm;
+    u_int32_t a = 0;
+    u_int32_t s = 0;
+    if (ins.mnemonic[1] == 'l'){
+        u_int32_t a = 1;
+    }
+    cond <<= 28;
+    a <<= 21;
+    s <<= 20;
+    rn <<= 12;
+    rd <<= 16;
+    rs <<= 8;
+
+    return cond | a | s | rd | rn | rs | 9 <<= 4 | rm;
 }
 
-char * data_transfer() {
-	return NULL;
+u_int32_t data_transfer(instruct ins) {
+    u_int32_t rd, rn,l,p, offset;
+    p = 1;
+    u = 1;
+    if (ins.mnemonic[0] == 'l'){
+        if (ins.operand2 < 0xff){ // when the size of operand2 is within 4 bytes, it acts like mov
+            ins.mnemonic = strdup("mov");
+            data_pro2(ins);
+            breaks;
+        } else {
+            rn = 15;// PC = 15; And rn = PC;
+            l = 1;
+            rd = ins.rd;
+            offset = 8;// size of instruction * 4 - 8; temperately can't figure out the size of instr
+        }
+        rn <<= 16;
+        p <<= 24;
+        u <<= 23;
+
+    }
+    return  1 <<= 26 | i | p | u |  l | rn | rd | offset;
 }
+
+
+
 
 char * branch() {
 	return NULL;

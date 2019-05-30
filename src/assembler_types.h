@@ -1,6 +1,6 @@
 #ifndef _TYPE_H
 #define _TYPE_H
-#define u32 unsigned int
+#define u32 u_int32_t
 
 typedef struct instruction{
   char *mnemonic;
