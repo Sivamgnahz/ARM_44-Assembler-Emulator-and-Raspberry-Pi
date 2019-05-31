@@ -58,6 +58,7 @@ int main(int argc, char *argv[]) {
               ins.rn = regtoBits(strtok(NULL, "\n"));
               ins.mnemonic = "mla";
           }
+          pro[count] = multiply(ins);
       }else if (strcmp(token,"ldr")==0
 		||strcmp(token,"str")==0){
           ins.rd = regtoBits(strtok(NULL, "\n"));
@@ -65,6 +66,7 @@ int main(int argc, char *argv[]) {
           if (token[0] == 's'){
               ins.rm = ins.operand2;
           }
+          pro[count] = data_transfer(ins);
       }else if (strcmp(token,"beq")==0
 		||strcmp(token,"bne")==0
 		||strcmp(token,"bge")==0
@@ -73,6 +75,7 @@ int main(int argc, char *argv[]) {
 		||strcmp(token,"ble")==0
 		||strcmp(token,"b")==0){
       }else{
+          pro[count] = special(ins);
       }
 
       count++;
@@ -249,15 +252,8 @@ char * hextoBits(char *hex) {
 }
 */
 
-u_int32_t multiply() {
-	return 0;
-}
 
-u_int32_t data_transfer() {
-	return 0;
-}
 
-/*
 u_int32_t multiply(instruct ins){
     u_int32_t cond  = 1110;
     u_int32_t rd  = ins.rd;
@@ -266,6 +262,7 @@ u_int32_t multiply(instruct ins){
     u_int32_t rm = ins.rm;
     u_int32_t a = 0;
     u_int32_t s = 0;
+    u_int32_t cons = 9;
     if (ins.mnemonic[1] == 'l'){
         u_int32_t a = 1;
     }
@@ -275,19 +272,21 @@ u_int32_t multiply(instruct ins){
     rn <<= 12;
     rd <<= 16;
     rs <<= 8;
+    cons <<= 4;
 
-    return cond | a | s | rd | rn | rs | 9 <<= 4 | rm;
+    return cond | a | s | rd | rn | rs | cons | rm;
 }
 
 u_int32_t data_transfer(instruct ins) {
-    u_int32_t rd, rn,l,p, offset;
+    u_int32_t rd, rn,l,p,u,i, offset,cons;
     p = 1;
     u = 1;
+    i = 1;
+    cons = 1;
     if (ins.mnemonic[0] == 'l'){
         if (ins.operand2 < 0xff){ // when the size of operand2 is within 4 bytes, it acts like mov
             ins.mnemonic = strdup("mov");
             data_pro2(ins);
-            breaks;
         } else {
             rn = 15;// PC = 15; And rn = PC;
             l = 1;
@@ -297,19 +296,20 @@ u_int32_t data_transfer(instruct ins) {
         rn <<= 16;
         p <<= 24;
         u <<= 23;
+        cons <<=26;
 
     }
-    return  1 <<= 26 | i | p | u |  l | rn | rd | offset;
+    return  cons | i | p | u |  l | rn | rd | offset;
 }
-*/
 
 
 
-u_int32_t branch() {
+
+u_int32_t branch(instruct ins) {
 	return 0;
 }
 
-u_int32_t special() {
+u_int32_t special(instruct ins) {
 	return 0;
 }
 
