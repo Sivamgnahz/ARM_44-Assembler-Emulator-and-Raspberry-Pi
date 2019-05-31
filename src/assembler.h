@@ -13,7 +13,7 @@ u_int32_t concat(int cond, int i, int opcode, int s, int rn, int rd, int operand
 //char * toBits(unsigned int x);
 //char * hextoBits(char *hex);
 
-u_int32_t multiply();
-u_int32_t data_transfer();
-u_int32_t branch();
-u_int32_t special();
+u_int32_t multiply(instruct ins);
+u_int32_t data_transfer(instruct ins);
+u_int32_t branch(instruct ins);
+u_int32_t special(instruct ins);
