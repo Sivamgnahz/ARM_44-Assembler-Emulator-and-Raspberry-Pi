@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
   fpw = fopen(argv[2], "wb");
   int count = 0;
   u_int32_t *pro;
+
   while (fgets(line, sizeof(line),fp) != NULL)
     {
       token = strtok(line, " ");
@@ -79,8 +80,9 @@ int main(int argc, char *argv[]) {
       }
 
       count++;
-      fwrite(pro, sizeof(pro), 1, fpw);
     }
+
+    fwrite(pro, sizeof(u_int32_t), count, fpw);
 
     fclose(fp);
     fclose(fpw);
