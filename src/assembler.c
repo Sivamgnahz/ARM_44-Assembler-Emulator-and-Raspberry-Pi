@@ -163,7 +163,7 @@ u_int32_t concat(int cond, int i, int opcode, int s, int rn, int rd, int operand
 	rd = rd << 12;
 	return cond | i | opcode | s | rn | rd | operand2;
 }
-//jsahdksajhdlsag
+
 /*
 // Convert int to binary string
 char * toBits(unsigned int x) {
