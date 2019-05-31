@@ -25,22 +25,29 @@ int main(int argc, char *argv[]) {
   u_int32_t *pro;
   while (fgets(line, sizeof(line),fp) != NULL)
     {
-      token = strtok(line, "\n\t\r ");
+      token = strtok(line, " ");
       ins.mnemonic = token;
       if (strcmp(token,"add")==0
 	  ||strcmp(token,"sub")==0
 	  ||strcmp(token,"rsb")==0
 	  ||strcmp(token,"and")==0
 	  ||strcmp(token,"eor")==0
-	  ||strcmp(token,"oor")==0
+	  ||strcmp(token,"orr")==0
 	  ){
-		pro[count] = data_pro1(line);
+          ins.rd = regtoBits(strtok(NULL, ","));
+          ins.rn = regtoBits(strtok(NULL, ","));
+          ins.operand2 = immtoBits(strtok(NULL, "\n"));
+          pro[count] = data_pro1(ins);
       }else if (strcmp(token,"mov")==0){
-		pro[count] = data_pro2(line);
+          ins.rd = regtoBits(strtok(NULL, ","));
+          ins.operand2 = immtoBits(strtok(NULL, "\n"));
+          pro[count] = data_pro2(ins);
       }else if (strcmp(token,"tst")==0
 		||strcmp(token,"teq")==0
 		||strcmp(token,"cmp")==0){
-		pro[count] = data_pro3(line);
+          ins.rn = regtoBits(strtok(NULL, ","));
+          ins.operand2 = immtoBits(strtok(NULL, "\n"));
+          pro[count] = data_pro3(ins);
       }else if (strcmp(token,"mul")==0
 		||strcmp(token,"mla")==0){
           ins.rd = regtoBits(strtok(NULL, "\n"));
@@ -51,15 +58,13 @@ int main(int argc, char *argv[]) {
               ins.rn = regtoBits(strtok(NULL, "\n"));
               ins.mnemonic = "mla";
           }
-      	fprintf(fpw, "%s\n", multiply(ins));
       }else if (strcmp(token,"ldr")==0
 		||strcmp(token,"str")==0){
           ins.rd = regtoBits(strtok(NULL, "\n"));
-          ins.operand2 = immtoBits(strtok(NULL, "\n"))
+          ins.operand2 = immtoBits(strtok(NULL, "\n"));
           if (token[0] == 's'){
               ins.rm = ins.operand2;
           }
-      	fprintf(fpw, "%s\n", data_transfer(ins));
       }else if (strcmp(token,"beq")==0
 		||strcmp(token,"bne")==0
 		||strcmp(token,"bge")==0
@@ -67,174 +72,82 @@ int main(int argc, char *argv[]) {
 		||strcmp(token,"bgt")==0
 		||strcmp(token,"ble")==0
 		||strcmp(token,"b")==0){
-		fprintf(fpw, "%s\n", branch(line));
       }else{
-      	fprintf(fpw, "%s\n", special(line));
       }
-      fclose(fp);
-      fclose(fpw);
-      fflush(fpw);
 
-	  count++;
-	  fwrite(pro, sizeof(pro), 1, fpw);
+      count++;
+      fwrite(pro, sizeof(pro), 1, fpw);
     }
-  return 0;
+
+    fclose(fp);
+    fclose(fpw);
+    fflush(fpw);
+
+    return 0;
 }
 
 // Process and, eor, sub, rsb, add, orr
-u_int32_t data_pro1(char *instruction){
-
-	char *p;
-	char opcode[3] = "";
-	char rd[3] = "";
-	char rn[3] = "";
-	char operand2[5] = "";
-
-	// Split instruction into opcode, rd, rn, operand2
-	p = strtok(instruction, " ");
-	if (p) {
-		strcat(opcode, p);
-	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(rd, p);
-	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(rn, p);
-	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(operand2, p);
-	}
-
-	// Convert opcode to u_int32_t
-	u_int32_t binOpcode = 0;
-
-	if (strcmp(opcode,"and")==0) {
-		binOpcode = AND;
-	}
-	if (strcmp(opcode,"eor")==0) {
-		binOpcode = EOR;
-	}
-	if (strcmp(opcode,"sub")==0) {
-		binOpcode = SUB;
-	}
-	if (strcmp(opcode,"rsb")==0) {
-		binOpcode = RSB;
-	}
-	if (strcmp(opcode,"add")==0) {
-		binOpcode = ADD;
-	}
-	if (strcmp(opcode,"orr")==0) {
-		binOpcode = ORR;
-	}
-
-	// Convert rd to u_int32_t
-	u_int32_t binRd = regtoBits(rd);
-
-	// Convert rn to u_int32_t
-	u_int32_t binRn = regtoBits(rn);
-
-	// Convert operand2 to u_int32_t
-	u_int32_t binOperand2 = immtoBits(operand2);
-
-	// Concatenate into u_int32_t
-	u_int32_t bits = concat(56, 1, binOpcode, 0, binRn, binRd, binOperand2);
-
-	return bits;
+u_int32_t data_pro1(instruct ins){
+    return concat(56, 1, getOpcode(ins.mnemonic), 0, ins.rn, ins.rd, ins.operand2);
 }
 
 // Process mov
-u_int32_t data_pro2(char *instruction) {
-
-	char *p;
-	char rd[3] = "";
-	char operand2[5] = "";
-
-	// Split instruction into mov, rd, operand2
-	p = strtok(instruction, " ");
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(rd, p);
-	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(operand2, p);
-	}
-
-	// Convert rd to u_int32_t
-	u_int32_t binRd = regtoBits(rd);
-
-	// Convert operand2 to u_int32_t
-	u_int32_t binOperand2 = immtoBits(operand2);
-
-	// Concatenate into u_int32_t
-	u_int32_t bits = concat(56, 1, 13, 0, 0, binRd, binOperand2);
-	
-	return bits;
+u_int32_t data_pro2(instruct ins) {
+	return concat(56, 1, getOpcode(ins.mnemonic), 0, 0, ins.rd, ins.operand2);
 }
 
 // Process tst, teq, cmp
-u_int32_t data_pro3(char *instruction) {
-
-	char *p;
-	char opcode[3] = "";
-	char rn[3] = "";
-	char operand2[5] = "";
-
-	// Split instruction into opcode, rn, operand2
-	p = strtok(instruction, " ");
-	if (p) {
-		strcat(opcode, p);
-	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(rn, p);
-	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(operand2, p);
-	}
-
-	// Convert opcode to u_int32_t
-	u_int32_t binOpcode = 0;
-
-	if (strcmp(opcode,"tst")==0) {
-		binOpcode = TST;
-	}
-	if (strcmp(opcode,"teq")==0) {
-		binOpcode = TEQ;
-	}
-	if (strcmp(opcode,"cmp")==0) {
-		binOpcode = CMP;
-	}
-
-	// Convert rn to u_int32_t
-	u_int32_t binRn = regtoBits(rn);
-
-	// Convert operand2 to u_int32_t
-	u_int32_t binOperand2 = immtoBits(operand2);
-
-	// Concatenate into u_int32_t
-	u_int32_t bits = concat(56, 1, binOpcode, 1, binRn, 0, binOperand2);
-
-	return bits;
+u_int32_t data_pro3(instruct ins) {
+    return concat(56, 1, getOpcode(ins.mnemonic), 1, ins.rn, 0, ins.operand2);
 }
 
 // Convert register to u_int32_t
 u_int32_t regtoBits(char *reg) {
-	return atoi(strcpy(reg, &reg[1]));
+    return atoi(strcpy(reg, &reg[1]));
 }
 
 // Convert immediate value to u_int32_t
 u_int32_t immtoBits(char *operand2) {
-	char *binOperand2 = "";
-	strcpy(binOperand2, &operand2[1]);
-	if (binOperand2[0] == '0' && binOperand2[1] == 'x') {
-		return (int)strtol(binOperand2, NULL, 0);
-	}
-	return atoi(binOperand2);
+    char *binOperand2 = "";
+    strcpy(binOperand2, &operand2[1]);
+    if (binOperand2[0] == '0' && binOperand2[1] == 'x') {
+        return (int)strtol(binOperand2, NULL, 0);
+    }
+    return atoi(binOperand2);
+}
+
+// Convert mnemonic to opcode
+u_int32_t getOpcode(char *token) {
+    if (strcmp(token,"add")==0) {
+        return ADD;
+    }
+    if (strcmp(token,"sub")==0) {
+        return SUB;
+    }
+    if (strcmp(token,"rsb")==0) {
+        return RSB;
+    }
+    if (strcmp(token,"and")==0) {
+        return AND;
+    }
+    if (strcmp(token,"eor")==0) {
+        return EOR;
+    }
+    if (strcmp(token,"orr")==0) {
+        return ORR;
+    }
+    if (strcmp(token,"mov")==0) {
+        return MOV;
+    }
+    if (strcmp(token,"tst")==0) {
+        return TST;
+    }
+    if (strcmp(token,"teq")==0) {
+        return TEQ;
+    }
+    if (strcmp(token,"cmp")==0) {
+        return CMP;
+    }
 }
 
 // Concatenate into u_int32_t
@@ -336,13 +249,15 @@ char * hextoBits(char *hex) {
 }
 */
 
-//char * multiply() {
-//	return NULL;
-//}
-//
-//char * data_transfer() {
-//	return NULL;
-//}
+u_int32_t multiply() {
+	return 0;
+}
+
+u_int32_t data_transfer() {
+	return 0;
+}
+
+/*
 u_int32_t multiply(instruct ins){
     u_int32_t cond  = 1110;
     u_int32_t rd  = ins.rd;
@@ -386,15 +301,15 @@ u_int32_t data_transfer(instruct ins) {
     }
     return  1 <<= 26 | i | p | u |  l | rn | rd | offset;
 }
+*/
 
 
 
-
-char * branch() {
-	return NULL;
+u_int32_t branch() {
+	return 0;
 }
 
-char * special() {
-	return NULL;
+u_int32_t special() {
+	return 0;
 }
 
