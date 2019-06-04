@@ -1,399 +1,555 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include "assembler_types.h"
 #include "assembler.h"
-uint32_t strToInt(char*);
-int main(int argc, char *argv[]) {
-  FILE *fp;
-  FILE *fpw;
-  char line[100];
-  char *token = NULL;
-  char *op1, *op2,*op3, label;
-  int program[1000];
-  int cnt = 0; // holds the address of the machine code instruction
+#define Total_Label_Line_Num_buffr  30
+FILE *fpw;
+FILE *fp;
 
+instruction instr;
 
-  
-  //first pass
+int Instr_Table[40][11];
+char read_1_key,read_2_key,read_3_key,read_4_key,read_w_key;
+int	TotalRegNum_inNo3_paragraph_butnot_in_bracket=0;	
 
-  fp = fopen(argv[1],"r");
-  fpw = fopen(argv[2], "wb");
-  uint32_t buffer;
-  while (fgets(line, sizeof(line),fp) != NULL)
-    {
-      token = strtok(line, "\n\t\r ");
-      if (strcmp(token,"add")==0
-	  ||strcmp(token,"sub")==0
-	  ||strcmp(token,"rsb")==0
-	  ||strcmp(token,"and")==0
-	  ||strcmp(token,"eor")==0
-	  ||strcmp(token,"oor")==0
-	  ){
-		char *pro1 = data_pro1(line);
-		buffer = strToInt(pro1);
-		free(pro1);
-      }else if (strcmp(token,"mov")==0){
-		char *pro2 = data_pro2(line);
-		buffer = strToInt(pro2);	
-		free(pro2);
-      }else if (strcmp(token,"tst")==0
-		||strcmp(token,"teq")==0
-		||strcmp(token,"cmp")==0){
-		char *pro3 = data_pro3(line);
-		buffer = strToInt(pro3);
-		free(pro3);
-      }else if (strcmp(token,"mul")==0
-		||strcmp(token,"mla")==0){
-      	fprintf(fpw, "%s\n", multiply(line));
-      }else if (strcmp(token,"ldr")==0
-		||strcmp(token,"str")==0){
-      	fprintf(fpw, "%s\n", data_transfer(line));
-      }else if (strcmp(token,"beq")==0
-		||strcmp(token,"bne")==0
-		||strcmp(token,"bge")==0
-		||strcmp(token,"blt")==0
-		||strcmp(token,"bgt")==0
-		||strcmp(token,"ble")==0
-		||strcmp(token,"b")==0){
-		fprintf(fpw, "%s\n", branch(line));
-      }else{
-      	fprintf(fpw, "%s\n", special(line));
-      }
-	  fwrite(&buffer, sizeof(uint32_t), 1, fpw);
-      fclose(fp);
-      fclose(fpw);
-      fflush(fpw);
-    }
-  return 0;
-}
-
-// Process and, eor, sub, rsb, add, orr
-char * data_pro1(char *instruction){
-
+int main(int argc, char *argv[]) 
+{
 	char *p;
-	char opcode[3] = "";
-	char rd[3] = "";
-	char rn[3] = "";
-	char operand2[5] = "";
+	char p1[20] = "";
+	char p2[20] = "";
+	char p3[20] = "";
+	char p4[20] = "";
+	int onntr_num =0;
+	int j; int i;	
+	int Line_Num=0;
+	
+	//fp = fopen(argv[1],"r");
+	fpw = fopen(argv[2], "wb");
+	for(i=0;i<Total_Label_Line_Num_buffr;i++)
+		for(j=0;j<11;j++)
+			Instr_Table[i][j] = 0xffffffff;
+		
+	Line_Num = Read_from_file(argv[1]);
 
-	// Split instruction into opcode, rd, rn, operand2
-	p = strtok(instruction, " ");
-	if (p) {
-		strcat(opcode, p);
+	
+for(j=0;j<Line_Num;j++)
+{
+	switch(Instr_Table[j][1])
+	{
+		case instrutype_data_processing:
+			printf(" instrutype_data_processing...\n");
+			break;
+		case instrutype_multiply:	 
+			printf(" instrutype_multiply.....   \n");	
+			break;
+		case instrutype_single_data_transfer:	 
+			printf(" instrutype_single_data_transfer....\n");	
+			break;
+		case instrutype_branch:	 
+			printf(" instrutype_branch.....\n");	
+			break;
+		case instrutype_special:	 
+			printf(" instrutype_special.........\n");	
+			break;
+		case instrutype_label:	 
+			printf(" instrutype_label..........\n");	
+			break;
+		default: 
+			printf(" unknown instrutype   !\n");
+			break;
 	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(rd, p);
-	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(rn, p);
-	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(operand2, p);
-	}
-
-	// Convert opcode to binary string
-	char binOpcode[4] = "";
-
-	if (strcmp(opcode,"and")==0) {
-		char *and = toBits(AND);
-		strcpy(binOpcode, &(and[28]));
-		free(and);
-	}
-	if (strcmp(opcode,"eor")==0) {
-		char *eor = toBits(EOR);
-		strcpy(binOpcode, &(eor[28]));
-		free(eor);
-	}
-	if (strcmp(opcode,"sub")==0) {
-		char *sub = toBits(SUB);
-		strcpy(binOpcode, &(sub[28]));
-		free(sub);
-	}
-	if (strcmp(opcode,"rsb")==0) {
-		char *rsb = toBits(RSB);
-		strcpy(binOpcode, &(rsb[28]));
-		free(rsb);
-	}
-	if (strcmp(opcode,"add")==0) {
-		char *add = toBits(ADD);
-		strcpy(binOpcode, &(add[28]));
-		free(add);
-	}
-	if (strcmp(opcode,"orr")==0) {
-		char *orr = toBits(ORR);
-		strcpy(binOpcode, &(orr[28]));
-		free(orr);
-	}
-
-	// Convert rd to binary string
-	char binRd[4] = "";
-	char *reg1 = regtoBits(rd);
-	strcpy(binRd, reg1);
-	free(reg1);
-
-	// Convert rn to binary string
-	char binRn[4] = "";
-	char *reg2 = regtoBits(rn);
-	strcpy(binRn, reg2);
-	free(reg2);
-
-	// Convert operand2 to binary string
-	char binOperand2[12] = "";
-	char *imm = immtoBits(operand2);
-	strcpy(binOperand2, imm);
-	free(imm);
-
-	// Concatenate into single binary string
-	char *bits = malloc(32 * sizeof(char));
-	strcpy(bits, "1110001");
-	strcat(bits, binOpcode);
-	strcat(bits, "0");
-	strcat(bits, binRn);
-	strcat(bits, binRd);
-	strcat(bits, binOperand2);
-
-	return bits;
+}
+	fclose(fp);
+	fclose(fpw);
+	return 0;
 }
 
-// Process mov
-char * data_pro2(char *instruction) {
 
-	char *p;
-	char rd[3] = "";
-	char operand2[5] = "";
+int Read_from_file(char argv[])
+{
+int j; int i;	
+int	Total_Label_Num=0;
+int Line_Num_File=0;
 
-	// Split instruction into mov, rd, operand2
-	p = strtok(instruction, " ");
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(rd, p);
+	if((fp = fopen(argv,"r")) == NULL)
+	{
+		printf(" cannot open file \n");
+		return 1;
 	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(operand2, p);
+	i=0;j=0;
+	while((read_1_key = getc(fp)) != EOF)
+	{
+		read_2_key =getc(fp);
+		if((read_2_key == EOF)||(read_2_key == 0x0a))
+			break;
+		read_3_key =getc(fp);
+		if((read_3_key == EOF)||(read_3_key == 0x0a))
+			break;
+		read_4_key =getc(fp);
+		if((read_4_key == EOF)||(read_4_key == 0x0a))	
+			break;
+		
+		
+		Instr_Table[i][0] = i;
+		if(read_2_key == ' ')//b foo
+		{
+			analysis_b_label(i);//if branch has Read 0x0a!  
+			goto exit_willdonotwhile;
+		}
+		else if(read_4_key == ' ') //xxx' ' 
+		{
+			j = analysis_First_paragraph(i);// only here will continue......
+			if(j)			//if branch has Read 0x0a!  
+				goto exit_willdonotwhile; 	
+		}
+
+		else if(read_4_key == 'e')//instrutype_special instru_ANDEQ
+		{
+			if((read_1_key == 'a')&&(read_2_key == 'n')&&(read_3_key == 'd'))
+				{Instr_Table[i][1] = instrutype_special;Instr_Table[i][2] = instru_ANDEQ;}
+			goto exit_willdonotwhile;
+		}
+		else// label
+		{
+			if(read_4_key == ':')
+				{Instr_Table[i][4] = read_1_key;Instr_Table[i][5] = read_2_key;Instr_Table[i][6] = read_3_key;Instr_Table[i][7] = read_4_key;}		
+			else 
+				analysis_last_label(i);
+			Total_Label_Num++;
+			Instr_Table[i][1] = instrutype_label;Instr_Table[i][2] = Total_Label_Num;Instr_Table[i][2] = i+1;
+			Instr_Table[i][4] = read_1_key;Instr_Table[i][5] = read_2_key;Instr_Table[i][6] = read_3_key;Instr_Table[i][7] = read_4_key;			
+			goto exit_willdowhile;
+		}
+		/////////////////////
+		analysis_No2_paragraph(i);//r1,
+		/////////////////////
+		analysis_No3_paragraph(i);//# r [ = -
+		goto exit_willdonotwhile;
+exit_willdowhile:
+		read_1_key = getc(fp);
+		while(read_1_key != 0x0a);//enter »»ÐÐ·ûºÅ
+exit_willdonotwhile:		
+		Line_Num_File++;
+		Total_Label_Num = 0;
+		i++;
+		j=0;
 	}
-
-	// Convert rd to binary string
-	char binRd[4] = "";
-	char *reg1 = regtoBits(rd);
-	strcpy(binRd, reg1);
-	free(reg1);
-
-	// Convert operand2 to binary string
-	char binOperand2[12] = "";
-	char *imm = immtoBits(operand2);
-	strcpy(binOperand2, imm);
-	free(imm);
-
-	// Concatenate into single binary string
-	char *bits = malloc(32 * sizeof(char));
-	strcpy(bits, "111000111010");
-	strcat(bits, binRd);
-	strcat(bits, binOperand2);
-
-	return bits;
-}
-
-uint32_t strToInt(char *str) {
-	return (uint32_t)strtol(str, NULL, 2);
-}
-
-// Process tst, teq, cmp
-char * data_pro3(char *instruction) {
-
-	char *p;
-	char opcode[3] = "";
-	char rn[3] = "";
-	char operand2[5] = "";
-
-	// Split instruction into opcode, rn, operand2
-	p = strtok(instruction, " ");
-	if (p) {
-		strcat(opcode, p);
+	
+	printf("Line0    Inst_ty1 ins_cMd2 Rn3      typ_Num4 Number5  Rd6      Rs7      Rm8      Lsr9     TotalRegNum_inNo3_paragraph_butnot_in_bracket\n");
+	for(i=0;i<Total_Label_Line_Num_buffr;i++)
+	{
+		for(j=0;j<11;j++)
+			printf("%08x ",Instr_Table[i][j]);
+		printf("\n");
 	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(rn, p);
+	return Line_Num_File;
+}
+
+
+int analysis_First_paragraph(int line) 
+{
+	int j=0;
+	if((read_1_key == 'a')&&(read_2_key == 'n')&&(read_3_key == 'd'))
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = and;}
+ 	else if((read_1_key == 'e')&&(read_2_key == 'o')&&(read_3_key == 'r'))
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = eor;}
+	else if((read_1_key == 's')&&(read_2_key == 'u')&&(read_3_key == 'b'))
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = sub;}	
+	else if((read_1_key == 'r')&&(read_2_key == 's')&&(read_3_key == 'b'))
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = rsb;}	
+	else if((read_1_key == 'a')&&(read_2_key == 'd')&&(read_3_key == 'd'))
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = add;}	
+	else if((read_1_key == 't')&&(read_2_key == 's')&&(read_3_key == 't'))
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = tst;}
+	else if((read_1_key == 't')&&(read_2_key == 'e')&&(read_3_key == 'q')) 
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = teq;}	
+	else if((read_1_key == 'c')&&(read_2_key == 'm')&&(read_3_key == 'p')) 
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = cmp;}	
+	else if((read_1_key == 'o')&&(read_2_key == 'r')&&(read_3_key == 'r'))
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = orr;}	
+	else if((read_1_key == 'm')&&(read_2_key == 'o')&&(read_3_key == 'v'))
+		{Instr_Table[line][1] = instrutype_data_processing;Instr_Table[line][2] = mov;}//instrutype_data_processing
+
+	else if((read_1_key == 'm')&&(read_2_key == 'u')&&(read_3_key == 'l'))
+		{Instr_Table[line][1] = instrutype_multiply;Instr_Table[line][2] = instru_mul;}	
+	else if((read_1_key == 'm')&&(read_2_key == 'l')&&(read_3_key == 'a'))
+		{Instr_Table[line][1] = instrutype_multiply;Instr_Table[line][2] = instru_mla;}//instrutype_multiply
+
+	else if((read_1_key == 'l')&&(read_2_key == 'd')&&(read_3_key == 'r'))
+		{Instr_Table[line][1] = instrutype_single_data_transfer;Instr_Table[line][2] = instru_ldr;}//!!!  = mov  #	
+	else if((read_1_key == 's')&&(read_2_key == 't')&&(read_3_key == 'r'))
+		{Instr_Table[line][1] = instrutype_single_data_transfer;Instr_Table[line][2] = instru_str;}//instrutype_single_data_transfer
+
+ 	else if((read_1_key == 'b')&&(read_2_key == 'e')&&(read_3_key == 'q'))
+		{j=1;analysis_bxx_label(line);Instr_Table[line][2] = instru_beq;return j;}
+	else if((read_1_key == 'b')&&(read_2_key == 'e')&&(read_3_key == 'q'))
+		{j=1;analysis_bxx_label(line);Instr_Table[line][2] = instru_bne;return j;}	
+	else if((read_1_key == 'b')&&(read_2_key == 'e')&&(read_3_key == 'q'))
+		{j=1;analysis_bxx_label(line);Instr_Table[line][2] = instru_bge;return j;}	
+	else if((read_1_key == 'b')&&(read_2_key == 'e')&&(read_3_key == 'q'))
+		{j=1;analysis_bxx_label(line);Instr_Table[line][2] = instru_blt;return j;}	
+	else if((read_1_key == 'b')&&(read_2_key == 'e')&&(read_3_key == 'q'))
+		{j=1;analysis_bxx_label(line);Instr_Table[line][2] = instru_bgt;return j;}
+	else if((read_1_key == 'b')&&(read_2_key == 'e')&&(read_3_key == 'q')) 
+		{j=1;analysis_bxx_label(line);Instr_Table[line][2] = instru_ble;return j;}//instrutype_branch	
+	else if((read_1_key == 'b')&&(read_2_key == 'e')&&(read_3_key == 'q')) 
+		{j=1;analysis_bxx_label(line);Instr_Table[line][2] = instru_b;return j;}	
+		
+	else 
+		printf("unknown instruction_cMd\n");
+	
+	return j;
+}
+
+void analysis_b_label(int line)//b foo:
+{
+	int j=0;
+	Instr_Table[line][4] = read_3_key;Instr_Table[line][5] = read_4_key;
+	read_w_key = getc(fp);
+//	Instr_Table[line][6] = read_w_key;
+	while(read_w_key != 0x0a)
+	{
+		Instr_Table[line][6+j] = read_w_key;
+		read_w_key = getc(fp);
+		j++;
 	}
-	p = strtok(NULL, " ");
-	if (p) {
-		strcat(operand2, p);
+	Instr_Table[line][1] = instrutype_branch;Instr_Table[line][2] = instru_b;	
+	return ;
+}
+
+void analysis_bxx_label(int line)//b foo:
+{
+	int j=0;
+	read_w_key = getc(fp);
+	while(read_w_key != 0x0a)
+	{
+		Instr_Table[line][4+j] = read_w_key;
+		read_w_key = getc(fp);
+		j++;
 	}
+	Instr_Table[line][1] = instrutype_branch;
+	return ;
+}
 
-	// Convert opcode to binary string
-	char binOpcode[4] = "";
-
-	if (strcmp(opcode,"tst")==0) {
-		char *tst = toBits(TST);
-		strcpy(binOpcode, &(tst[28]));
-		free(tst);
+void analysis_last_label(int line)
+{
+	int j=0;
+	read_w_key = getc(fp);
+	Instr_Table[line][8] = read_w_key;
+	while(read_w_key != ':')
+	{
+		read_w_key = getc(fp);
+		Instr_Table[line][9+j] = read_w_key;
 	}
-	if (strcmp(opcode,"teq")==0) {
-		char *teq = toBits(TEQ);
-		strcpy(binOpcode, &(teq[28]));
-		free(teq);
+	return ;
+}
+
+
+void analysis_No2_paragraph(int line)
+{
+	read_w_key = getc(fp);
+	if(read_w_key != 'r')
+		printf("unknown No2_paragraph  r!\n");
+	
+	read_w_key = getc(fp);
+	Instr_Table[line][3] = read_w_key-0x30;//char --> int
+
+	read_w_key = getc(fp);
+	if(read_w_key != ',')
+		printf("unknown No2_paragraph   ,!\n");
+
+	return ;	
+}
+
+void analysis_No3_paragraph(int line)//# r [ = ' '   will do while((read_1_key = getc(fp)) != 0x0a)
+{
+int j;
+	read_w_key = getc(fp);
+	TotalRegNum_inNo3_paragraph_butnot_in_bracket = 0;
+	while(read_w_key == ' ')// get off ' '
+		read_w_key = getc(fp);
+	
+	if(read_w_key == '#')//read out #
+	{
+		analysis_No3_pound(line);
+		
 	}
-	if (strcmp(opcode,"cmp")==0) {
-		char *cmp = toBits(CMP);
-		strcpy(binOpcode, &(cmp[28]));
-		free(cmp);
+	else if(read_w_key == '=')// only ldr
+	{
+		read_w_key = getc(fp);//read out  0
+		read_w_key = getc(fp);//read out  x
+		read_w_key = getc(fp);//read out  first 16hexnumbe
+		j = analysis_No3_16hexnumber(line);
+		Instr_Table[line][4] = Num_EQ;
+		if((Instr_Table[line][5]<=0x100)&&(Instr_Table[line][1]==instrutype_single_data_transfer)&&(Instr_Table[line][2]==instru_ldr))
+		{
+			Instr_Table[line][1] = instrutype_data_processing;
+			Instr_Table[line][2] = mov;// spec P15
+		}
 	}
-
-	// Convert rn to binary string
-	char binRn[4] = "";
-	char *reg2 = regtoBits(rn);
-	strcpy(binRn, reg2);
-	free(reg2);
-
-	// Convert operand2 to binary string
-	char binOperand2[12] = "";
-	char *imm = immtoBits(operand2);
-	strcpy(binOperand2, imm);
-	free(imm);
-
-	// Concatenate into single binary string
-	char *bits = malloc(32 * sizeof(char));
-	strcpy(bits, "1110001");
-	strcat(bits, binOpcode);
-	strcat(bits, "1");
-	strcat(bits, binRn);
-	strcat(bits, "0000");
-	strcat(bits, binOperand2);
-
-	return bits;
-}
-
-// Convert register to binary string
-char * regtoBits(char *reg) {
-	char *binReg = malloc(4 * sizeof(char));
-	char *bits = toBits(atoi(strcpy(reg, &reg[1])));
-	strcpy(binReg, &(bits[28]));
-	free(bits);
-	return binReg;
-}
-
-// Convert immediate value to binary string
-char * immtoBits(char *operand2) {
-	char *binOperand2 = malloc(12 * sizeof(char));
-	strcpy(binOperand2, "0000");
-	if (operand2[1] == '0' && operand2[2] == 'x') {
-		char *bits1 = hextoBits(strcpy(operand2, &operand2[3]));
-		strcat(binOperand2, bits1);
-		free(bits1);
-	} else {
-		char to8Bits[8] = "";
-		char *bits2 = toBits(atoi(strcpy(operand2, &operand2[1])));
-		strcpy(to8Bits, &(bits2[24]));
-		free(bits2);
-		strcat(binOperand2, to8Bits);
+	else if(read_w_key == '[')
+	{
+		read_w_key = getc(fp);// read out r
+		
+		read_w_key = getc(fp);
+		Instr_Table[line][6] = read_w_key-0x30;//read out  n char --> int   
+		
+restart_in_bracket:
+		read_w_key = getc(fp);
+		if(read_w_key == ']')
+		{
+			read_w_key = getc(fp);
+			if(read_w_key == 0x0a)// end or ','
+				return;
+			else 
+			{
+				read_w_key = getc(fp);//read out r
+				read_w_key = getc(fp);//read out n
+				Instr_Table[line][7] = read_w_key-0x30;//read out  n char --> int 
+				TotalRegNum_inNo3_paragraph_butnot_in_bracket++;
+				Instr_Table[line][10] = TotalRegNum_inNo3_paragraph_butnot_in_bracket;
+				read_w_key = getc(fp);//read out 0x0a
+			}
+		}
+		else if(read_w_key == ' ')
+			goto restart_in_bracket; //get off ' '
+		else if(read_w_key == ',')
+			goto restart_in_bracket; //get off ','
+		else if(read_w_key == '#')
+			analysis_No3_pound(line);
+		else if(read_w_key == 'r')
+		{
+			read_w_key = getc(fp);
+			Instr_Table[line][7] = read_w_key-0x30;//read out  n char --> int 
+			goto restart_in_bracket;
+		}
+		else if(read_w_key == 'l')//lsr r2
+		{
+			read_w_key = getc(fp);//s
+			read_w_key = getc(fp);//r 
+			read_w_key = getc(fp);//' '
+			read_w_key = getc(fp);//r or '#'
+			Instr_Table[line][9] = Has_lsr;
+			if(read_w_key == '#')
+			{
+				read_w_key = getc(fp);
+				Instr_Table[line][5] = read_w_key-0x30;//read out  n char --> int 
+				Instr_Table[line][4] = Num_pound;
+			}
+			else 
+			{
+				read_w_key = getc(fp);
+				Instr_Table[line][8] = read_w_key-0x30;//read out  n char --> int 
+			}
+			goto restart_in_bracket;
+		}		
+		else 
+			printf("unknown No3_paragraph_Rs\n");
 	}
-	return binOperand2;
+	else if(read_w_key == 'r')
+	{
+		TotalRegNum_inNo3_paragraph_butnot_in_bracket++;Instr_Table[line][10] = TotalRegNum_inNo3_paragraph_butnot_in_bracket;
+		read_w_key = getc(fp);
+		Instr_Table[line][6] = read_w_key-0x30;//read out  n char --> int   
+		
+restart:
+		read_w_key = getc(fp);
+		if(read_w_key == 0x0a)// end
+			return;
+		else if(read_w_key == ' ')
+			goto restart; //get off ' '
+		else if(read_w_key == ',')
+			goto restart; //get off ','
+		else if(read_w_key == '#')
+			analysis_No3_pound(line);
+		else if(read_w_key == 'r')
+		{
+			TotalRegNum_inNo3_paragraph_butnot_in_bracket++;Instr_Table[line][10] = TotalRegNum_inNo3_paragraph_butnot_in_bracket;
+			read_w_key = getc(fp);
+			Instr_Table[line][7+j] = read_w_key-0x30;//read out  n char --> int 
+			j++;
+			goto restart;
+		}
+		else if(read_w_key == 'l')//lsr r2  
+		{
+			read_w_key = getc(fp);//s
+			read_w_key = getc(fp);//r 
+			read_w_key = getc(fp);//' '
+			read_w_key = getc(fp);//r or '#'
+			Instr_Table[line][9] = Has_lsr;
+			if(read_w_key == 'r')
+			{
+				TotalRegNum_inNo3_paragraph_butnot_in_bracket++;
+				Instr_Table[line][10] = TotalRegNum_inNo3_paragraph_butnot_in_bracket;
+				read_w_key = getc(fp);
+				Instr_Table[line][8] = read_w_key-0x30;//read out  n char --> int 
+			}
+			else
+			{
+				read_w_key = getc(fp);
+				Instr_Table[line][5] = read_w_key-0x30;//read out  n char --> int 				
+				Instr_Table[line][4] = Num_pound;
+			}
+			goto restart;
+		}		
+		else 
+			printf("unknown No3_paragraph_Rs\n");
+	}
+	else 
+		printf("unknown No3_paragraph\n");	
 }
 
-// Convert int to binary string
-char * toBits(unsigned int x) {
-	char *bits = malloc(32 * sizeof(char));
-	int i; 
-	unsigned int mask = 1 << 31;
-	for(i=0; i<32; ++i) { 
-		if((x & mask) == 0){ 
-			bits[i] = 0;
-		} else { 
-			bits[i] = 1;
-		} 
-		x = x << 1; 
-	} 
-	return bits;
+
+void analysis_No3_pound(int line)//read out #       (#1 #0x3F0000 #-0x4 #0x0F)
+{
+	int j=0;
+
+	Instr_Table[line][4] = Num_pound;
+	read_w_key = getc(fp);//read out  first 10hexnumbe
+	if(read_w_key == '0')//16hexnumbe
+	{
+		read_1_key = getc(fp);//read out  x
+		read_w_key = getc(fp);//read out  first 16hexnumbe
+		j = analysis_No3_16hexnumber(line);
+
+	}
+	else if(read_w_key == '-')//#-0x4 
+	{
+		Instr_Table[line][4] = Num_negative;
+		read_1_key = getc(fp);//read out 0
+		read_2_key = getc(fp);//read out  x
+		read_w_key = getc(fp);//read out  first 16hexnumbe
+		j = analysis_No3_16hexnumber(line);	
+	}
+	else if((read_w_key>='0')&&(read_w_key<='9'))//#1  //#57954613//read out first 10hexnumber
+	{
+		j = analysis_No3_10hexnumber(line);
+
+	}
+	else 
+		printf("unknown No3_pound\n");
 }
 
-// Convert hex to binary string
-char * hextoBits(char *hex) {
-	char *bin = malloc(8 * sizeof(char));
-	bin[0] = '\0';
-	int i;
-	for(i=0; hex[i]!='\0'; i++)
-    {
-        switch(hex[i])
-        {
-            case '0':
-                strcat(bin, "0000");
-                break;
-            case '1':
-                strcat(bin, "0001");
-                break;
-            case '2':
-                strcat(bin, "0010");
-                break;
-            case '3':
-                strcat(bin, "0011");
-                break;
-            case '4':
-                strcat(bin, "0100");
-                break;
-            case '5':
-                strcat(bin, "0101");
-                break;
-            case '6':
-                strcat(bin, "0110");
-                break;
-            case '7':
-                strcat(bin, "0111");
-                break;
-            case '8':
-                strcat(bin, "1000");
-                break;
-            case '9':
-                strcat(bin, "1001");
-                break;
-            case 'a':
-            case 'A':
-                strcat(bin, "1010");
-                break;
-            case 'b':
-            case 'B':
-                strcat(bin, "1011");
-                break;
-            case 'c':
-            case 'C':
-                strcat(bin, "1100");
-                break;
-            case 'd':
-            case 'D':
-                strcat(bin, "1101");
-                break;
-            case 'e':
-            case 'E':
-                strcat(bin, "1110");
-                break;
-            case 'f':
-            case 'F':
-                strcat(bin, "1111");
-                break;
-            default:
-                printf("Invalid hexadecimal input.");
-        }
-    }
-    return bin;
+int analysis_No3_10hexnumber(int line)//#1
+{
+	int j=0;
+	int Tmp=0;
+	
+	Tmp = read_w_key - 0x30;
+	read_w_key = getc(fp); //read out next 10hexnumber
+	while((read_w_key != 0x0a))
+	{
+		if((read_w_key>='0')&&(read_w_key<='9'))
+		{
+			Tmp =Tmp * 10;
+			Tmp += read_w_key - 0x30;
+		}
+		else if(read_w_key == 0x0a)
+			 break;
+		else if(read_w_key == ']')
+			 ;			 
+		else if((read_w_key != ',')&&(read_w_key != ' '))
+			{printf("unknown No3_10hexnumber !last char!\n");return j;}		
+		else // == ','or' '
+		{
+			j++;
+			break;
+		}
+		read_w_key = getc(fp); //read out next 10hexnumber
+	}
+	Instr_Table[line][5] = Tmp;
+	return j;	
 }
 
-char * multiply() {
-	return NULL;
+int analysis_No3_16hexnumber(int line)//#0x
+{
+	int j=0;
+	int Tmp=0;
+
+	if((read_w_key>='0')&&(read_w_key<='9'))
+	{
+		Tmp = read_w_key - 0x30;
+	}
+	else if((read_w_key>='A')&&(read_w_key<='F'))// 'A'---'F'
+	{
+		Tmp = read_w_key - 0x37;
+	}
+	else if((read_w_key>='a')&&(read_w_key<='f'))// 'a'--'f'
+	{
+		Tmp = read_w_key - 0x57;
+	}				
+	else 
+		{printf("unknown No3_11hexnumber \n");return j;}	
+	
+	read_w_key = getc(fp); //read out next 16hexnumber
+	while((read_w_key != 0x0a))
+	{
+		if((read_w_key>='0')&&(read_w_key<='9'))
+		{
+			Tmp =Tmp * 16;
+			Tmp += read_w_key - 0x30;
+		}
+		else if((read_w_key>='A')&&(read_w_key<='F'))// 'A'---'F'
+		{
+			Tmp =Tmp * 16;
+			Tmp += read_w_key - 0x37;
+		}
+		else if((read_w_key>='a')&&(read_w_key<='f'))// 'a'--'f'
+		{
+			Tmp =Tmp * 16;
+			Tmp += read_w_key - 0x57;
+		}			
+		else if(read_w_key == 0x0a)
+			 break;
+		else if(read_w_key ==  ']')
+			 ;			 
+		else if((read_w_key != ',')&&(read_w_key != ' '))
+			{printf("unknown No3_11hexnumber \n");return j;}		
+		else // == ','or' '
+		{
+			j++;
+			break;
+		}
+		read_w_key = getc(fp); //read out next 10hexnumber
+	}
+	Instr_Table[line][5] = Tmp;
+	return j;
 }
 
-char * data_transfer() {
-	return NULL;
-}
 
-char * branch() {
-	return NULL;
-}
 
-char * special() {
-	return NULL;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
