@@ -1,1 +1,0 @@
-/usr/bin/cc -g   CMakeFiles/arm11_44.dir/src/assembler.c.o CMakeFiles/arm11_44.dir/src/assembler_yifei.c.o CMakeFiles/arm11_44.dir/src/emulate.c.o  -o arm11_44 
