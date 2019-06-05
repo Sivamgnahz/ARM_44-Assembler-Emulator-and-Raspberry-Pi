@@ -415,7 +415,7 @@ int Line_realinstruNum=0;
 	i=0;j=0;
 L_first:	
 	while((read_1_key = getc(fp)) != EOF)
-	{
+	{//0x0a is \n.
 		if((read_1_key == 0x0a)||(read_1_key == ' '))
 			goto L_first;
 		read_2_key =getc(fp);
