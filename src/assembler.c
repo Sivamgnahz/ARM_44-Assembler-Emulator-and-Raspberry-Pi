@@ -1,4 +1,3 @@
-<<<<<<< src/assembler.c
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -842,4 +841,3 @@ int analysis_No3_16hexnumber(int line)//#0x
     Instr_Table[line][5] = Tmp;
     return j;
 }
->>>>>>>src/assembler.c
