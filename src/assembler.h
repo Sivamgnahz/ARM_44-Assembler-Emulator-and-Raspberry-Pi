@@ -13,6 +13,7 @@ int analysis_No3_16hexnumber(int line);//#0x
 void data_processing(int line);
 void branch(int line);
 void single_data_transfer(int line);
+void multiply(int line);
 
 enum instruction_type{
 instrutype_data_processing = 1,					//Instr_Table[line][1]
@@ -67,6 +68,7 @@ Num_bracket_lsr_pound = 7,			//No3_paragraph fist char is  [ lsr #
 Num_bracket_lsr_r = 8,			//No3_paragraph fist char is  [ lsr r
 Num_bracket_end_pound = 9,				//No3_paragraph fist char is  [Rn],#expression,
 Num_bracket_end_pound_negative = 10,		//No3_paragraph fist char is  [Rn],#-expression
+Num_bracket_x = 11,
 
 Num_r_lsr_r = 0x10,							// r lsr r
 Num_r_lsr_pound = 0x11,							// r lsr #

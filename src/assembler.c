@@ -47,9 +47,11 @@ int main(int argc, char *argv[])
 				break;
 			case instrutype_multiply:	 
 				printf(" instrutype_multiply.....2          ");	
+				multiply(j);
 				break;
 			case instrutype_single_data_transfer:	 
 				printf(" instrutype_single_data_transfer....3");
+				printf("aaaaacccccccccccaaaa ");
 				single_data_transfer(j);
 				break;
 			case instrutype_branch:
@@ -103,6 +105,7 @@ int main(int argc, char *argv[])
 }
 void single_data_transfer(int line)
 {
+	printf("aaaaacccccccccccaaaa :%d", line);
 int i,j,k,TMP,TMP1;
 
 	instr.SingleDataTransfer.Cond = always;
@@ -111,6 +114,11 @@ int i,j,k,TMP,TMP1;
 
 
 	instr.SingleDataTransfer.I = 0;
+
+	if(Instr_Table[line][4] == Num_bracket_x){
+		instr.SingleDataTransfer.P = 0;
+	}
+
 	if((Instr_Table[line][4] == Num_EQ)||(Instr_Table[line][4] == Num_bracket_r)||(Instr_Table[line][4] == Num_bracket_pound)||(Instr_Table[line][4] == Num_bracket_pound_negative)||(Instr_Table[line][4] == Num_bracket_lsr_pound)||(Instr_Table[line][4] == Num_bracket_lsr_r))
 	{//p15  <=expression> (ldr only). [Rn], [Rn,<#expression>]
 		instr.SingleDataTransfer.P = 1;
@@ -124,7 +132,18 @@ int i,j,k,TMP,TMP1;
 		instr.SingleDataTransfer.L = 1;
 	else if(Instr_Table[line][2] == instru_str)
 		instr.SingleDataTransfer.L = 0;
-	
+
+	if (Instr_Table[line][7] != 0xffffffff)
+	{
+		instr.SingleDataTransfer.Offset = Instr_Table[line][7];
+		instr.SingleDataTransfer.I = 1;	
+	}
+	else {
+		instr.SingleDataTransfer.Offset = 0;
+	}
+	if (Instr_Table[line][10] == 1) 
+		instr.SingleDataTransfer.P = 0;
+
 	if((Instr_Table[line][2] == instru_ldr)&&(Instr_Table[line][4] == Num_EQ))
 	{//P15 <=expression> (ldr only).
 		instr.SingleDataTransfer.Rn = 15;//pc
@@ -133,22 +152,40 @@ int i,j,k,TMP,TMP1;
 
 		instr.SingleDataTransfer.Offset = (expr_num + Line_Num -Total_Label_Num - line -2)*4;
 		expr_num++;//xq
-		
+
+
 	}
 	else
 	{
-		instr.SingleDataTransfer.Rn = Instr_Table[line][6];
-		if(Instr_Table[line][4] == Num_bracket_r)
-			instr.SingleDataTransfer.Offset = 0;
-		else if(Instr_Table[line][4] == Num_bracket_pound)
+		if (Instr_Table[line][4] == Num_bracket_r) {
+			instr.SingleDataTransfer.Rn = Instr_Table[line][6];
+		}
+		else if(Instr_Table[line][4] == Num_bracket_pound || Instr_Table[line][4] == Num_bracket_x) {
 			instr.SingleDataTransfer.Offset = Instr_Table[line][5]&0x00000fff;// bit11-0
+			
+
+		}
+			
+
 		else if(Instr_Table[line][4] == Num_bracket_pound_negative){  //hzz
 			instr.SingleDataTransfer.Offset = Instr_Table[line][5]&0x00000fff;
 				instr.SingleDataTransfer.U = 0;
 		}
 	}
-	
+	if (Instr_Table[line][9] != 0xffffffff) {
+		instr.SingleDataTransfer.I = 1;
+		instr.data_pro_reg.Shift_type = Instr_Table[line][9] - 1;
+		if (Instr_Table[line][8] != 0xffffffff) {
+			instr.data_pro_reg.Integer = Instr_Table[line][7] << 1;
+			instr.data_pro_reg.bit4 = 1;
+		}
+		else {
+			instr.data_pro_reg.Integer = Instr_Table[line][5];
+			instr.data_pro_reg.bit4 = 0;
+		}
+	}
 	instr.SingleDataTransfer.Rd = Instr_Table[line][3];
+	instr.SingleDataTransfer.Rn = Instr_Table[line][6];
 
 
 }
@@ -160,6 +197,7 @@ int k = 0;
 int label_line = 0;
 int NumOfOtherLabel_between_BranchLineAndLabelLine = 0;
 int offset= 0;
+int is_equal = 1; //hzz
 	
 	instr.Branch.bit2726 = 2;
 	instr.Branch.bit2524 = 2;
@@ -167,20 +205,37 @@ int offset= 0;
  		
 	for(i=0;i<Line_Num;i++)//search label_line
 	{
-		if(Instr_Table[i][1] == instrutype_label)
+		if(Instr_Table[i][1] == instrutype_label) //hzz
 		{
-			for(j=0;j<search_label_lenthofchar;j++)// label length <=6,(xxxxx:)
-			{
-				if(Instr_Table[i][j+4] == 0x3a)//':'
-					label_line = i;// maybe label line 
+			for(int j = 0; j<search_label_lenthofchar;j++){
+				if(Instr_Table[i][j+4]== 0x3a && Instr_Table[line][j+4] == 0xffffffff && is_equal){
+					label_line = i;
+					printf("aaaaaaaaaaaaaline is : %d\n", label_line);
+				} 
+				if(Instr_Table[i][j+4] != 0x3a && Instr_Table[i][j+4] != Instr_Table[line][j+4]){
+					is_equal = 0;
+				}
 			}
-			for(k=0;k<j;k++)// j is found label length
-			{
-				if(Instr_Table[i][k+4] != Instr_Table[line][k+4])// judge label line is or not 
-					break;
-				else
-					label_line = i;// find label line here!!!
-			}
+			// for(j=0;j<search_label_lenthofchar;j++)// label length <=6,(xxxxx:)
+			// {
+			// 	if(Instr_Table[i][j+4]!= 0x3a && (Instr_Table[i][j+4] != Instr_Table[line][j+4])){
+			// 		is_equal = 0;
+			// 		printf("aaaaaaaaashhhhhhhhhhhhhhhhhh\n");
+			// 		break;
+			// 	}
+
+			// 	if(Instr_Table[i][j+4] == 0x3a && is_equal)//':'
+			// 		label_line = i;// maybe label line 
+			// 		printf("aaaaaaaaaaaaaaaaaaaaaa: %d\n", i);
+
+			// }
+			// for(k=0;k<search_label_lenthofchar;k++)// j is found label length
+			// {
+			// 	if(Instr_Table[i][k+4] != Instr_Table[line][k+4])// judge label line is or not 
+			// 		break;
+			// 	else
+			// 		label_line = i;// find label line here!!!
+			// }
 		}
 	}
 	////// srh othr Label between BranchLine And LabelLine
@@ -196,7 +251,7 @@ int offset= 0;
 		for(i=label_line+1;i<line;i++)
 			if(Instr_Table[i][1] == instrutype_label)
 				NumOfOtherLabel_between_BranchLineAndLabelLine++;
-		offset =  label_line+1-line-2-NumOfOtherLabel_between_BranchLineAndLabelLine;
+		offset =  label_line+1-line-2+NumOfOtherLabel_between_BranchLineAndLabelLine; //hzz, change - to +
 	}
 			
 	instr.Branch.Sign = (offset&0x80000000)>>31;//bit31-->bit23	negative bit23
@@ -220,7 +275,8 @@ void data_processing(int line)
 		instr.data_pro.I = 0;
 	instr.data_pro.OpCode = Instr_Table[line][2];//OpCode
 	if(Instr_Table[line][2] == instru_lsl)//P16  lsl Rn, <#expression>  === mov Rn,Rn, lsl <#expression>.
-		instr.data_pro.OpCode = mov;	
+		instr.data_pro.OpCode = mov;
+		
 	if((Instr_Table[line][2] == tst )||(Instr_Table[line][2] == teq )||(Instr_Table[line][2] == cmp ))//S
 		instr.data_pro.S = 1;
 	else
@@ -229,6 +285,7 @@ void data_processing(int line)
 	///// set  Rn,Rd,Operand2
 	if(Instr_Table[line][10] == 0)//P13
 	{
+		instr.data_pro.Operand2 = Instr_Table[line][5];
 		if((Instr_Table[line][2] == tst )||(Instr_Table[line][2] == teq )||(Instr_Table[line][2] == cmp ))
 		{//tst, teq, cmp.<opcode> Rn, <Operand2>   ie.cmp r1,#2
 			instr.data_pro.Rn = Instr_Table[line][3];
@@ -239,32 +296,36 @@ void data_processing(int line)
 			instr.data_pro.Rd = Instr_Table[line][3];
 			instr.data_pro.Rn = 0;
 			instr.data_pro.I = 1;//xq
+			int imm_value = Instr_Table[line][5];
+			int count = 0;
+			int rotate;
+
+			if (imm_value < 0xff) {
+				instr.data_pro.Operand2 = imm_value;
+			} else {
+				while(imm_value % 2 == 0) {
+					if (imm_value % 4 != 0 && count % 2 == 0) {
+						break;
+					}
+					imm_value >>= 1;
+					count++;
+				}
+				rotate = 32 - count;
+				rotate >>= 1;
+				instr.data_pro_imm.Rotate = rotate;
+				instr.data_pro_imm.Imm = imm_value;//xq
+		
+			}
 		}
 		else if(Instr_Table[line][2] == instru_lsl)//P16  lsl Rn, <#expression>  === mov Rn,Rn, lsl <#expression>.
 		{
 
+			instr.data_pro_reg.Rm = Instr_Table[line][3];
+			instr.data_pro_reg.bit4 = 0;
+			instr.data_pro_reg.Shift_type = 0;
+			instr.data_pro_reg.Integer = Instr_Table[line][5];//xq
 
 		}
-		int imm_value = Instr_Table[line][5];
-		int count = 0;
-		int rotate;
-		if (imm_value < 0xff) {
-			instr.data_pro.Operand2 = Instr_Table[line][5];
-		} else {
-			while(imm_value % 2 == 0) {
-				if (imm_value % 4 != 0 && count % 2 == 0) {
-					break;
-				}
-		    	imm_value >>= 1;
-				count++;
-		    }
-			rotate = 32 - count;
-			rotate >>= 1;
-			instr.data_pro_imm.Rotate = rotate;
-			instr.data_pro_imm.Imm = imm_value;//xq
-	
-		}
-	
 		
 	}
 	else if(Instr_Table[line][10] == 1)
@@ -285,6 +346,7 @@ void data_processing(int line)
 			instr.data_pro.Rd = Instr_Table[line][3];
 			instr.data_pro.Rn = 0;
 			instr.data_pro.I = 0;
+			instr.data_pro.Operand2 = Instr_Table[line][6];
 
 		}
 	}
@@ -297,7 +359,12 @@ void data_processing(int line)
 	}
 	else if(Instr_Table[line][10] == 3)
 	{
-
+		instr.data_pro.Rd = Instr_Table[line][3];
+		instr.data_pro.Rn = Instr_Table[line][6];
+		instr.data_pro_reg.Rm = Instr_Table[line][7];
+		instr.data_pro_reg.bit4 = 1;
+		instr.data_pro_reg.Shift_type = Instr_Table[line][9];
+		instr.data_pro_reg.Integer = Instr_Table[line][8] << 1;
 
 	}
 	else 
@@ -306,6 +373,32 @@ void data_processing(int line)
 	
 }
 
+void multiply(int line){
+	instr.Multiply.bit2726 = 0;
+	instr.Multiply.bit2522 = 0;
+    instr.Multiply.bit74 = 9;
+	instr.Multiply.A = 0;
+	instr.Multiply.S = 1;
+	for(int i = 0; i < line; i++){
+		if(Instr_Table[i][1] == 1){
+			instr.Multiply.Cond = 14;
+			instr.Multiply.S = 0;
+			break;
+		}
+	}
+	instr.Multiply.Rd = Instr_Table[line][3];
+	instr.Multiply.Rm = Instr_Table[line][6];
+	instr.Multiply.Rs = Instr_Table[line][7];
+
+	if(Instr_Table[line][10] == 3){
+		instr.Multiply.Rn = Instr_Table[line][8];
+		instr.Multiply.A = 1;
+	} else {
+		instr.Multiply.Rn = 0;
+	}
+
+
+}
 
 
 int Read_from_file(char argv[])
@@ -559,17 +652,22 @@ restart_in_bracket:
 		if(read_w_key == ']')
 		{
 			read_w_key = getc(fp);
-			if(read_w_key == 0x0a)// end or ','
+			if(read_w_key == 0x0a) // end or ','
 				return;
-			else if(read_w_key == 'r')
+			else if((read_w_key = getc(fp)) == 'r')
 			{
+				
 				Instr_Table[line][4] = Num_bracket_r; //[ r  r
-				read_w_key = getc(fp);//read out r
-				read_w_key = getc(fp);//read out n
+				read_w_key = getc(fp);//read out n//xq delete
 				Instr_Table[line][7] = read_w_key-0x30;//read out  n char --> int 
 				TotalRegNum_inNo3_paragraph_butnot_in_bracket++;
 				Instr_Table[line][10] = TotalRegNum_inNo3_paragraph_butnot_in_bracket;
 				read_w_key = getc(fp);//read out 0x0a
+			}
+			else if(read_w_key == '#')
+			{
+				analysis_No3_pound(line);
+				Instr_Table[line][4] = Num_bracket_x;
 			}
 		}
 		else if(read_w_key == ' ')
