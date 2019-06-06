@@ -39,6 +39,19 @@ void single_data_transfer(int line);
 void multiply(int line);
 //same as above
 
+//instrution table
+//0:the number of instructions
+//1:type of instructions
+//2:specific type of the data processing instruction
+//3:Rn
+//4:type of the number
+//5:absolute value of the number
+//6:Rd
+//7:Rs
+//8:Rm
+//9:Lsr
+//10:total number of registers except the first one
+
 //instruction type, will be stotred in the table(easy and faster)
 enum instruction_type{
 instrutype_data_processing = 1,					//Instr_Table[line][1]

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "assembler_types.h"
+#include "emulate_struct.h"
 #include "assembler.h"
 
 FILE *fpw;
@@ -10,25 +10,18 @@ FILE *fp;
 instruction instr;
 
 int	Instr_Table[Total_Label_Line_Num_buffr][11];
-char	read_1_key,read_2_key,read_3_key,read_4_key,read_w_key;
-int	TotalRegNum_inNo3_paragraph_butnot_in_bracket=0;
-int	Line_Num=0;
-int	data_transfer_ldr =0;
-int	Total_Label_Num=0;
-int expr_num =0;
+char read_1_key,read_2_key,read_3_key,read_4_key,read_w_key;
+int	TotalRegNum_inNo3_paragraph_butnot_in_bracket = 0;
+int	Line_Num = 0;
+int	data_transfer_ldr = 0;
+int	Total_Label_Num = 0;
+int expr_num = 0;
 
 
 int main(int argc, char *argv[])
 {
-    char *p;
-    char p1[20] = "";
-    char p2[20] = "";
-    char p3[20] = "";
-    char p4[20] = "";
-    int onntr_num =0;
     int j; int i;
 
-    //fp = fopen(argv[1],"r");
     fpw = fopen(argv[2], "wb");
     for(i=0;i<Total_Label_Line_Num_buffr;i++)
         for(j=0;j<11;j++)
@@ -36,30 +29,29 @@ int main(int argc, char *argv[])
 
     Line_Num = Read_from_file(argv[1]);
 
-    data_transfer_ldr =0xffffffff;
-    for(j=0;j<Line_Num;j++)
+    data_transfer_ldr = 0xffffffff;
+    for( j=0; j<Line_Num; j++)
     {
         switch(Instr_Table[j][1])
         {
             case instrutype_data_processing:
-                printf(" instrutype_data_processing...1      ");
+                printf(" instrutype_data_processing...1      \n");
                 data_processing(j);
                 break;
             case instrutype_multiply:
-                printf(" instrutype_multiply.....2          ");
+                printf(" instrutype_multiply.....2          \n");
                 multiply(j);
                 break;
             case instrutype_single_data_transfer:
-                printf(" instrutype_single_data_transfer....3");
-                printf("aaaaacccccccccccaaaa ");
+                printf(" instrutype_single_data_transfer....3\n");
                 single_data_transfer(j);
                 break;
             case instrutype_branch:
                 branch(j);
-                printf(" instrutype_branch.....4             ");
+                printf(" instrutype_branch.....4             \n");
                 break;
             case instrutype_special:
-                printf(" instrutype_special.........5        ");
+                printf(" instrutype_special.........5        \n");
                 if(Instr_Table[j][2] == instru_ANDEQ)
                 {
                     instr.instr_32bits = 0x00000000;
@@ -88,20 +80,17 @@ int main(int argc, char *argv[])
             fwrite(&instr,4,1,fpw);
         }
     }
+
     fclose(fp);
     fclose(fpw);
     return 0;
 }
 void single_data_transfer(int line)
 {
-    printf("aaaaacccccccccccaaaa :%d", line);
     int i,j,k,TMP,TMP1;
 
     instr.SingleDataTransfer.Cond = always;
     instr.SingleDataTransfer.bit2726 = 1;
-
-
-
     instr.SingleDataTransfer.I = 0;
 
     if(Instr_Table[line][4] == Num_bracket_x){
@@ -224,15 +213,14 @@ void data_processing(int line)
     {
         instr.data_pro.I = 1;
         instr.data_pro.Operand2 = Instr_Table[line][5];
-    }
-    else
-    {
+    } else {
         instr.data_pro.I = 0;
-
     }
     if(Instr_Table[line][2] == instru_lsl)
         instr.data_pro.I = 0;
+
     instr.data_pro.OpCode = Instr_Table[line][2];//OpCode
+
     if(Instr_Table[line][2] == instru_lsl)//P16  lsl Rn, <#expression>  === mov Rn,Rn, lsl <#expression>.
         instr.data_pro.OpCode = mov;
 
@@ -249,16 +237,14 @@ void data_processing(int line)
         {//tst, teq, cmp.<opcode> Rn, <Operand2>   ie.cmp r1,#2
             instr.data_pro.Rn = Instr_Table[line][3];
             instr.data_pro.Rd = 0;
-        }
-        else if(Instr_Table[line][2] == mov)// mov Rd, <Operand2>
-        {
+        } else if(Instr_Table[line][2] == mov) {// mov Rd, <Operand2>
             instr.data_pro.Rd = Instr_Table[line][3];
             instr.data_pro.Rn = 0;
             instr.data_pro.I = 1;//xq
+            
             int imm_value = Instr_Table[line][5];
             int count = 0;
             int rotate;
-
             if (imm_value < 0xff) {
                 instr.data_pro.Operand2 = imm_value;
             } else {
@@ -273,19 +259,13 @@ void data_processing(int line)
                 rotate >>= 1;
                 instr.data_pro_imm.Rotate = rotate;
                 instr.data_pro_imm.Imm = imm_value;//xq
-
             }
-        }
-        else if(Instr_Table[line][2] == instru_lsl)//P16  lsl Rn, <#expression>  === mov Rn,Rn, lsl <#expression>.
-        {
-
+        } else if(Instr_Table[line][2] == instru_lsl){//P16  lsl Rn, <#expression>  === mov Rn,Rn, lsl <#expression>.
             instr.data_pro_reg.Rm = Instr_Table[line][3];
             instr.data_pro_reg.bit4 = 0;
             instr.data_pro_reg.Shift_type = 0;
             instr.data_pro_reg.Integer = Instr_Table[line][5];//xq
-
         }
-
     }
     else if(Instr_Table[line][10] == 1)
     {
@@ -306,7 +286,6 @@ void data_processing(int line)
             instr.data_pro.Rn = 0;
             instr.data_pro.I = 0;
             instr.data_pro.Operand2 = Instr_Table[line][6];
-
         }
     }
     else if(Instr_Table[line][10] == 2)
@@ -314,7 +293,6 @@ void data_processing(int line)
         instr.data_pro.Rd = Instr_Table[line][3];
         instr.data_pro.Rn = Instr_Table[line][6];
         instr.data_pro.Operand2 = Instr_Table[line][7];
-
     }
     else if(Instr_Table[line][10] == 3)
     {
@@ -324,12 +302,9 @@ void data_processing(int line)
         instr.data_pro_reg.bit4 = 1;
         instr.data_pro_reg.Shift_type = Instr_Table[line][9];
         instr.data_pro_reg.Integer = Instr_Table[line][8] << 1;
-
     }
     else
         printf(" unknown TotalRegNum_inNo3_paragraph_butnot_in_bracket   !\n");
-
-
 }
 
 void multiply(int line){
@@ -371,7 +346,7 @@ int Read_from_file(char argv[])
     }
     i=0;j=0;
     L_first:
-    while((read_1_key = getc(fp)) != EOF)
+    while((read_1_key = getc(fp)) != EOF) //didnt reach the end
     {
         if((read_1_key == 0x0a)||(read_1_key == ' '))
             goto L_first;
@@ -384,8 +359,7 @@ int Read_from_file(char argv[])
         read_4_key =getc(fp);
         if(read_4_key == 0x0a)
             goto L_first;
-
-
+    
         Instr_Table[i][0] = i;
         if(read_2_key == ' ')//b foo
         {
@@ -398,7 +372,6 @@ int Read_from_file(char argv[])
             if(j)			//if branch has Read 0x0a!
                 goto exit_would_not_while;
         }
-
         else if(read_4_key == 'e')//instrutype_special instru_ANDEQ
         {
             if((read_1_key == 'a')&&(read_2_key == 'n')&&(read_3_key == 'd'))
@@ -416,13 +389,14 @@ int Read_from_file(char argv[])
             Instr_Table[i][4] = read_1_key;Instr_Table[i][5] = read_2_key;Instr_Table[i][6] = read_3_key;Instr_Table[i][7] = read_4_key;
             goto exit_willdowhile;
         }
-        /////////////////////
+
         analysis_No2_paragraph(i);//r1,
-        /////////////////////
         analysis_No3_paragraph(i);//# r [ = -
+       
         goto exit_would_not_while;
+        
         exit_willdowhile:
-        //while((read_1_key = getc(fp)) != 0x0a);//enter ���з���
+        //while((read_1_key = getc(fp)) != 0x0a);
         read_1_key = getc(fp);
         if(read_1_key == 0x0a)
             goto exit_would_not_while;
@@ -434,11 +408,10 @@ int Read_from_file(char argv[])
         Line_Num_File++;
         i++;
         j=0;
-
-
     }
-
-    printf("Line0    Inst_ty1 ins_cMd2 Rn3      typ_Num4 Number5  Rd6      Rs7      Rm8      Lsr9     TotalRegNum_inNo3_paragraph_butnot_in_bracket\n");
+    
+    printf("Line0    Inst_ty1 Ins_cMd2 Rn/Rd3   Num_Typ4 Number5  Rd/Rn6   Rs7      Rm8      Lsr9     RegNum\n");
+    //TotalRegNum_inNo3_paragraph_butnot_in_bracket
     for(i=0;i<Total_Label_Line_Num_buffr;i++)
     {
         for(j=0;j<11;j++)
@@ -447,7 +420,6 @@ int Read_from_file(char argv[])
     }
     return Line_Num_File;
 }
-
 
 int analysis_First_paragraph(int line)
 {
@@ -500,7 +472,6 @@ int analysis_First_paragraph(int line)
     else if((read_1_key == 'l')&&(read_2_key == 's')&&(read_3_key == 'l'))
     {Instr_Table[line][1] = instrutype_special;Instr_Table[line][2] = instru_lsl;}
 
-
     else
         printf("unknown instruction_cMd\n");
 
@@ -512,7 +483,6 @@ void analysis_b_label(int line)//b foo:
     int j=0;
     Instr_Table[line][4] = read_3_key;Instr_Table[line][5] = read_4_key;
     read_w_key = getc(fp);
-//	Instr_Table[line][6] = read_w_key;
     while(read_w_key != 0x0a)
     {
         Instr_Table[line][6+j] = read_w_key;
@@ -549,7 +519,6 @@ void analysis_last_label(int line)
     }
     return ;
 }
-
 
 void analysis_No2_paragraph(int line)
 {
