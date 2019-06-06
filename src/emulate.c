@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "emulate_struct.h"
 #include "emulate.h"
-// 0b1011
+
 uint8_t memory[65536] = {0};  //initialise to 0, store instructions and data
 uint32_t reg[17] = {0};  //0-12, 15, 16 are useful, store registers
 CPSR_type CPSR; 
@@ -26,16 +26,7 @@ int main(int argc, char *argv[]) {
     memory[counter++] = *buffer;  //store instructions into the memory
   }
 
-  // printf("Rasberry Pi blink\n");
-  // wiringPiSetuoGpio();
-  // pinMode(LED, OUTPUT);
-  // for(int x = 0;x<4;x++){
-  //   digitalWrite(LED, 1);
-  //   delay(500);
-  //   digitalWrite(LED, 0);
-  //   delay(500); 
-  // }
-
+ 
   while (1) {
     readInstruction();
     if (!instr.instr_32bits) {
@@ -314,7 +305,6 @@ uint32_t check_cond(uint32_t cond) {  //check the initial condition for every in
 
 
 
-
 void branch() {
 
   signed int offset_shift = instr.Branch.Offset;
@@ -324,20 +314,11 @@ void branch() {
       offset_shift |= ((1 << 9) - 1) << 23;
     }
     offset_shift <<= 2;
-  
     if ((reg[15] + offset_shift + 8 - 4) < 65536) {
-   
       reg[15] = reg[15] + offset_shift + 8 - 4;
-      //reg[15] = reg[15] + offset_shift;
-
-
     }
-    
   }
 }
-
-
-
 
 
 
@@ -366,28 +347,27 @@ void single_data_transfer() { //single data transfer instruction
 
 void single_data_load(uint32_t rn){
     if(rn<0x10000){//memory[65536]
-    if (instr.SingleDataTransfer.Rn == 15){
-      	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn +8));
+        if (instr.SingleDataTransfer.Rn == 15){
+          	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn +8));
+        } else {
+          	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn));
+        }
     } else {
-      	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn));
-    }
-	} else {
-    if (if_in_pin_area(rn)){
-        write_register(instr.SingleDataTransfer.Rd, rn);
-    }
-  } 
-
+        if (if_in_pin_area(rn)){
+            write_register(instr.SingleDataTransfer.Rd, rn);
+        }
+    } 
 }
 
 void single_data_store(uint32_t rn){
   uint32_t result = read_register(instr.SingleDataTransfer.Rd);
     if(rn<0x10000){//memory[65536]
-    if (instr.SingleDataTransfer.Rn == 15){
-      rn += 8;
-    } 
-    for(int i = 0; i<4;i++){
-        	memory[rn+i] = build_mask(result, i*8,8);
-    }
+        if (instr.SingleDataTransfer.Rn == 15){
+            rn += 8;
+        } 
+        for(int i = 0; i<4;i++){
+            memory[rn+i] = build_mask(result, i*8,8);
+        }
     } 
 }
 
@@ -438,9 +418,7 @@ void clear_pin(){
 uint32_t add_sub_offset(){
     
   uint32_t result = read_register(instr.SingleDataTransfer.Rn); //result is the memory address in register
-  //int offset = get_offset(instr)*4;
   uint32_t offset = get_offset();
- 
   if(instr.SingleDataTransfer.U){
     result += offset;
   } else {
@@ -499,9 +477,7 @@ void report_err_instruction() {
 uint32_t build_mask(uint32_t value_masked, uint32_t start_point, uint32_t length) { //startpoint starts from 0
   value_masked = value_masked >> start_point; 
   uint32_t mask = 0;
-  // for(int x = 0; x < length; x++) {
-  //   mask = ((1 << (length + 1)) - 1);
-  // }
+ 
     for(int x = 0; x < length; x++) {
     mask += (int)pow((double)2, (double)x);
   }
