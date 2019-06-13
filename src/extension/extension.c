@@ -2,10 +2,9 @@
 #define MAX_LENGTH 1000
 
 int main(int argc, char *argv[]){
-    char answer;
-    char answer2;
+    char *answer;
     char sentence[MAX_LENGTH];
-    char str[] = "SOS";
+    char str[] = "SOSx";
 
     // wiringPiSetup();
 	// pinMode(LED, OUTPUT);
@@ -14,22 +13,24 @@ int main(int argc, char *argv[]){
     printf("================\n");
     printf("SOS? y/n\n");
     printf("================\n");    
-    scanf("%c",&answer);
-    if(answer == 'y'){
+    scanf("%s",answer);
+    if(strcmp(answer, "y") == 0){
         strcpy(sentence, str);
         goto SOS;
-    } else if(answer != 'n'){
-        // printf("Wrong message, please try again\n");
+    } else if(strcmp(answer, "n") != 0){
+        printf("\nWrong message: %s, please try again\n", answer);
+        printf("You are only allowed to enter 'y' or 'n'\n\n");
         goto SOS_wrong;
     }
 
     SKIP_wrong:  //whether skip the introduction
     printf("Skip Introduction? y/n\n");
-    scanf("%c",&answer2);
-    if(answer2 == 'y'){
+    scanf("%s",answer);
+    if(strcmp(answer, "y") == 0){
         goto Play_again;
-    } else if(answer2 != 'n'){
-        // printf("Wrong message:%c,please try again\n",answer2);
+    } else if(strcmp(answer, "n") != 0){
+        printf("\nWrong message: %s, please try again\n", answer);
+        printf("You are only allowed to enter 'y' or 'n'\n\n");
         goto SKIP_wrong;
     }
 
@@ -41,6 +42,7 @@ int main(int argc, char *argv[]){
     printf("\n================\n\n");
     printf("Please note that you are only allowed to use English letters, numbers, and symbols below: \n");
     printf("' '; ','; '!'; '.'; '?'\n");
+    printf("All English character with lower case will be automatically transferred to upper case letter.\n");
     printf("Any symbol or character other than these will not been showed by light.\n"); 
     printf("\n================\n\n");  
     Play_again:
@@ -60,26 +62,27 @@ int main(int argc, char *argv[]){
 
     CONVERT_wrong: //play again or not
     printf("Want to convert another sentence? y/n \n");
-    scanf("%c",&answer);
-    if(answer == 'y'){
-    } else if(answer == 'n'){
+    scanf("%s",answer);
+    if(strcmp(answer, "n") == 0){
         goto End;
-    } else {
-        printf("Wrong message, please try again\n");
+    } else if(strcmp(answer, "y") != 0){
+        printf("\nWrong message: %s, please try again\n", answer);
+        printf("You are only allowed to enter 'y' or 'n'\n\n");
         goto CONVERT_wrong;
     }
 
     REVIEW_wrong: //need to read the rule or not
     printf("Want to see the rules again? y/n\n");
-    scanf("%c",&answer);
-    if(answer == 'y'){
+    scanf("%s",answer);
+    if(strcmp(answer, "y") == 0){
         printf("\n\n\n");
         goto Rules;
-    } else if(answer == 'n'){
-        printf("\n\n\n");
+    } else if(strcmp(answer, "n") == 0){
+        printf("\n\n");
         goto Play_again;
     } else {
-        // printf("Wrong message, please try again\n");
+        printf("\nWrong message: %s, please try again\n", answer);
+        printf("You are only allowed to enter 'y' or 'n'\n\n");
         goto REVIEW_wrong;
     }
 
@@ -90,19 +93,25 @@ int main(int argc, char *argv[]){
 }
 
 void read_sentence(char* sentence){
+    printf("\n--------------------\nConvert in processing...\n");
     int length = strlen(sentence);
     char previous;
-    for(int i=0; i<length; i++){
+    for(int i=0; i<length-1; i++){
+        printf("--------------------\n");
         char ch = sentence[i];
         int type = filter(ch);
         int morse_code = 0;
         if(type==LOWER_LETTER){
+            printf("Character '%c' has been converted successfully.\n", ch);
             ch = toupper(ch);
             morse_code = letter_to_morse(ch);
         } else if(type==UPPER_LETTER){
-            morse_code = letter_to_morse(ch);            
+            morse_code = letter_to_morse(ch);
+            printf("Character '%c' has been converted successfully.\n", ch);
+                        
         } else if(type==NUMBER){
             morse_code = number_to_morse(ch);
+            printf("Character '%c' has been converted successfully.\n", ch);
         } else if(type==NORMAL_SYMBOL){
             if(filter(previous)!= NORMAL_SYMBOL){
                 morse_code = symbol_to_morse(ch);
