@@ -1,4 +1,8 @@
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdint.h>
 
 #define DATA_LENGTH 32
 
