@@ -8,13 +8,8 @@
 uint8_t memory[65536] = {0};  //initialise to 0, store instructions and data
 uint32_t reg[17] = {0};  //0-12, 15, 16 are useful, store registers
 CPSR_type CPSR; 
-instruction instr;
-uint32_t data_length = 32; //data have 32 bits
 uint32_t shift_carry_out = 0;
 uint32_t add_carry_out = 0;
-FILE* fplog = NULL;//xj
-uint32_t instruction_is_branch =0;  
-uint32_t  if_pc_result =0;
 int PIN = 0;
 
 int main(int argc, char *argv[]) {	
@@ -28,11 +23,12 @@ int main(int argc, char *argv[]) {
 
  
   while (1) {
-    readInstruction();
+    instruction instr;
+    instr = readInstruction();
     if (!instr.instr_32bits) {
       break;
     }
-    check_instr_set();
+    check_instr_set(instr);
     reg[15] += 4;
   }
   reg[15] += 8;
@@ -54,30 +50,31 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-void readInstruction() { 
+instruction readInstruction() { 
+  instruction instr;
   uint32_t pc = reg[15];
   instr.instr_Byt.Byt0 = memory[pc];
 	instr.instr_Byt.Byt1 = memory[pc + 1];
 	instr.instr_Byt.Byt2 = memory[pc + 2];
 	instr.instr_Byt.Byt3 = memory[pc + 3];
+  return instr;
 }
-void check_instr_set() { //check which type of instructions it is
-	instruction_is_branch = 0;
+void check_instr_set(instruction instr) { //check which type of instructions it is
 	if (instr.instr_set.bit2726 == 0) {
     	if ((instr.instr_set.bit2524 == 00)&&(instr.instr_set.bit23 == 0)&&(instr.instr_set.bit22 == 0)&&(instr.instr_set.bit74 == 9)) {
-      		multiply();
+      		multiply(instr);
     	} else {
-      		data_processing();
+      		data_processing(instr);
     	}
   } else if (instr.instr_set.bit2726 == 1) {
 		if ((instr.instr_set.bit22 == 0) && (instr.instr_set.bit21 == 0)) {
-			  single_data_transfer();	
+			  single_data_transfer(instr);	
     } else {
 			  report_err_instruction();
     }
     } else if (instr.instr_set.bit2726 == 2) {
 		if (instr.instr_set.bit2524 == 2) {
-        branch();
+        branch(instr);
 		} else {
 			report_err_instruction();
 		}
@@ -90,9 +87,9 @@ void check_instr_set() { //check which type of instructions it is
 
 
 
-void data_processing(){
+void data_processing(instruction instr){
     uint32_t operand1 = read_register(instr.data_pro.Rn);
-    uint32_t operand2 = get_operand2();
+    uint32_t operand2 = get_operand2(instr);
     uint32_t result;
     uint32_t C;
     uint32_t Z;
@@ -150,14 +147,14 @@ void data_processing(){
         CPSR.CPSR_Bits.Z =0;
       }
       CPSR.CPSR_Bits.N = build_mask(result, 31, 1);
-	    set_C(result);
+	    set_C(result, instr.data_pro.OpCode);
   
      
   }
 }
 
 
-uint32_t get_operand2(){
+uint32_t get_operand2(instruction instr){
   uint32_t value;
   if (instr.data_pro.I == 1) {
     value = instr.data_pro_imm.Imm;
@@ -167,13 +164,13 @@ uint32_t get_operand2(){
   } else {
     uint32_t value_Rm = read_register(instr.data_pro_reg.Rm);
     if (instr.data_pro_reg.bit4 == 0) {
-      value = shift(instr.data_pro_reg.Shift_type, instr.data_pro_reg.Integer, value_Rm);
+      value = shift(instr.data_pro_reg.Shift_type, instr.data_pro_reg.Integer, value_Rm, instr);
     } else {
       if (instr.data_pro_reg.Integer % 2 != 0) {
 	      value = read_register(instr.data_pro_reg.Rm);
       } else {
         uint32_t value_Rs = read_register(instr.data_pro_reg.Integer/2);
-        value = shift(instr.data_pro_reg.Shift_type, value_Rs, value_Rm);
+        value = shift(instr.data_pro_reg.Shift_type, value_Rs, value_Rm, instr);
       }
     }
   }
@@ -181,8 +178,8 @@ uint32_t get_operand2(){
 }
 
 
-void set_C(int result) { //data processing helper function 
-  switch(instr.data_pro.OpCode) {
+void set_C(int result, int opCode) { //data processing helper function 
+  switch(opCode) {
   case 0:
   case 1:
   case 8:
@@ -208,29 +205,29 @@ void set_C(int result) { //data processing helper function
 }
 
 
-uint32_t shift(uint32_t shift_type, uint32_t shift_amount, uint32_t value) { //data processing helper functnion
+uint32_t shift(uint32_t shift_type, uint32_t shift_amount, uint32_t value, instruction instr) { //data processing helper functnion
   uint32_t bits;
   uint32_t bit_sign;
   uint32_t bits_low;
   uint32_t bits_high;
   switch(shift_type) {
   case 0:
-    bits = build_mask(value, 0, data_length - shift_amount);
+    bits = build_mask(value, 0, DATA_LENGTH - shift_amount);
     if (instr.data_pro.S == 1) {
       if (shift_amount == 0) {
         return bits;
       }
-      shift_carry_out = build_mask(value, data_length - shift_amount, 1);
+      shift_carry_out = build_mask(value, DATA_LENGTH - shift_amount, 1);
     }
     return bits << shift_amount;
   case 1:
-    bits = build_mask(value, shift_amount, data_length - shift_amount);
+    bits = build_mask(value, shift_amount, DATA_LENGTH - shift_amount);
     if (instr.data_pro.S == 1) {
       shift_carry_out = build_mask(value, shift_amount - 1, 1);
     }
     return bits;
   case 2:
-    bits = build_mask(value, shift_amount, data_length - shift_amount - 1);
+    bits = build_mask(value, shift_amount, DATA_LENGTH - shift_amount - 1);
     bit_sign = build_mask(value, 31, 1);
     bit_sign <<= 31;
     if (instr.data_pro.S == 1) {
@@ -238,9 +235,9 @@ uint32_t shift(uint32_t shift_type, uint32_t shift_amount, uint32_t value) { //d
     }
     return bits ^ bit_sign;
   case 3:
-    bits_high = build_mask(value, shift_amount, data_length - shift_amount);
+    bits_high = build_mask(value, shift_amount, DATA_LENGTH - shift_amount);
     bits_low = build_mask(value, 0, shift_amount);
-    bits_low <<= (data_length - shift_amount);
+    bits_low <<= (DATA_LENGTH - shift_amount);
     if (instr.data_pro.S == 1) {
      shift_carry_out = build_mask(value, shift_amount - 1, 1);
     }
@@ -248,7 +245,7 @@ uint32_t shift(uint32_t shift_type, uint32_t shift_amount, uint32_t value) { //d
   }
 }
 
-void multiply() { //multiply instruction
+void multiply(instruction instr) { //multiply instruction
   uint32_t content; 
   if (check_cond(instr.Multiply.Cond)) {
     if(instr.Multiply.A){
@@ -305,39 +302,45 @@ uint32_t check_cond(uint32_t cond) {  //check the initial condition for every in
 
 
 
-void branch() {
+
+void branch(instruction instr) {
 
   signed int offset_shift = instr.Branch.Offset;
-  instruction_is_branch = 1;
   if (check_cond(instr.Branch.Cond)){
     if (offset_shift & (1 << 23)) {
       offset_shift |= ((1 << 9) - 1) << 23;
     }
     offset_shift <<= 2;
+  
     if ((reg[15] + offset_shift + 8 - 4) < 65536) {
+   
       reg[15] = reg[15] + offset_shift + 8 - 4;
-    }
+ 
+    } 
   }
 }
 
 
 
 
-void single_data_transfer() { //single data transfer instruction
+
+
+
+void single_data_transfer(instruction instr) { //single data transfer instruction
     if(check_cond(instr.SingleDataTransfer.Cond)){
     	uint32_t  r = add_sub_offset(instr);
     if(instr.SingleDataTransfer.L){  //load  
       if(instr.SingleDataTransfer.P){  //add before  
-      single_data_load(r);
+      single_data_load(r, instr);
     } else {
-    	single_data_load(read_register(instr.SingleDataTransfer.Rn));
+    	single_data_load(read_register(instr.SingleDataTransfer.Rn), instr);
       write_register(instr.SingleDataTransfer.Rn, r);  
       }
     } else { //store     
       if(instr.SingleDataTransfer.P){//add/sub before
-	    single_data_store(r);
+	    single_data_store(r, instr);
       } else {  //add/sub after 
-      single_data_store(read_register(instr.SingleDataTransfer.Rn));
+      single_data_store(read_register(instr.SingleDataTransfer.Rn), instr);
        write_register(instr.SingleDataTransfer.Rn, r);  
       }
     }
@@ -345,46 +348,47 @@ void single_data_transfer() { //single data transfer instruction
 }
 
 
-void single_data_load(uint32_t rn){
+void single_data_load(uint32_t rn, instruction instr){
     if(rn<0x10000){//memory[65536]
-        if (instr.SingleDataTransfer.Rn == 15){
-          	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn +8));
-        } else {
-          	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn));
-        }
+    if (instr.SingleDataTransfer.Rn == 15){
+      	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn +8));
     } else {
-        if (if_in_pin_area(rn)){
-            write_register(instr.SingleDataTransfer.Rd, rn);
-        }
-    } 
+      	write_register(instr.SingleDataTransfer.Rd, get_4bit_memory(rn));
+    }
+	} else {
+    if (if_in_pin_area(rn)){
+        write_register(instr.SingleDataTransfer.Rd, rn);
+    }
+  } 
+
 }
 
-void single_data_store(uint32_t rn){
+void single_data_store(uint32_t rn, instruction instr){
   uint32_t result = read_register(instr.SingleDataTransfer.Rd);
     if(rn<0x10000){//memory[65536]
-        if (instr.SingleDataTransfer.Rn == 15){
-            rn += 8;
-        } 
-        for(int i = 0; i<4;i++){
-            memory[rn+i] = build_mask(result, i*8,8);
-        }
+    if (instr.SingleDataTransfer.Rn == 15){
+      rn += 8;
+    } 
+    for(int i = 0; i<4;i++){
+        	memory[rn+i] = build_mask(result, i*8,8);
+    }
     } 
 }
 
-uint32_t get_offset(){
+uint32_t get_offset(instruction instr){
     uint32_t value = 0;
   if (!instr.SingleDataTransfer.I) {
     value = instr.SingleDataTransfer.Offset;
   }else {
     uint32_t value_Rm = read_register(instr.data_pro_reg.Rm);
     if (instr.data_pro_reg.bit4 == 0) {
-      value = shift(instr.data_pro_reg.Shift_type, instr.data_pro_reg.Integer, value_Rm);
+      value = shift(instr.data_pro_reg.Shift_type, instr.data_pro_reg.Integer, value_Rm, instr);
     }else {
       if (instr.data_pro_reg.Integer % 2 == 0) {
 	value = read_register(instr.data_pro_reg.Rm);
       }else {
         uint32_t value_Rs = read_register(instr.data_pro_reg.Integer/2);
-        value = shift(instr.data_pro_reg.Shift_type, value_Rs, value_Rm);
+        value = shift(instr.data_pro_reg.Shift_type, value_Rs, value_Rm, instr);
       }
     }
   }    
@@ -415,10 +419,12 @@ void clear_pin(){
   PIN = 0;
   }
 
-uint32_t add_sub_offset(){
+uint32_t add_sub_offset(instruction instr){
     
   uint32_t result = read_register(instr.SingleDataTransfer.Rn); //result is the memory address in register
-  uint32_t offset = get_offset();
+  //int offset = get_offset(instr)*4;
+  uint32_t offset = get_offset(instr);
+ 
   if(instr.SingleDataTransfer.U){
     result += offset;
   } else {
@@ -477,12 +483,19 @@ void report_err_instruction() {
 uint32_t build_mask(uint32_t value_masked, uint32_t start_point, uint32_t length) { //startpoint starts from 0
   value_masked = value_masked >> start_point; 
   uint32_t mask = 0;
- 
+  // for(int x = 0; x < length; x++) {
+  //   mask = ((1 << (length + 1)) - 1);
+  // }
     for(int x = 0; x < length; x++) {
     mask += (int)pow((double)2, (double)x);
   }
   return mask&value_masked;
 }
+
+
+
+
+
 
 
 

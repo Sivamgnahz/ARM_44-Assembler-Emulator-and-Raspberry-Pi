@@ -1,12 +1,5 @@
 
 #include <stdint.h>
-
-#define uint32_t unsigned int
-#define uint32 unsigned int
-#define u32 unsigned int
-#define search_label_lenthofchar  6
-#define Total_Label_Line_Num_buffr  30
-
 typedef union
 {
 	uint32_t CPSR_32bits;
