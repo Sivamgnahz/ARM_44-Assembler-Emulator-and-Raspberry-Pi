@@ -53,81 +53,81 @@ void multiply(int line);
 //10:total number of registers except the first one
 
 //instruction type, will be stotred in the table(easy and faster)
-enum instruction_type{
-instrutype_data_processing = 1,					//Instr_Table[line][1]
-instrutype_multiply = 2,
-instrutype_single_data_transfer  = 3,
-instrutype_branch= 4,
-instrutype_special = 5,
-instrutype_label= 6,
-};	
+enum instruction_type {
+    INSTRUTYPE_DATA_PROCESSING = 1,
+    INSTRUTYPE_MULTIPLY = 2,
+    INSTRUTYPE_SINGLE_DATA_TRANSFER = 3,
+    INSTRUTYPE_BRANCH = 4, 
+    INSTRUTYPE_SPECIAL = 5,
+    INSTRUTYPE_LABEL = 6,
+};
 
 //the specific instruction type for data processing
 //will be stored if the instruction is a data processing type 
 //or a multiple instruction(but didnt use it)
-enum instruction_cMd {
-and = 0,	// spec P14  						Instr_Table[line][2]
-eor = 1,
-sub = 2,
-rsb = 3,
-add = 4,
-tst = 8,
-teq = 9,
-cmp = 10,
-orr = 12,
-mov = 13,	//type 1 
- 
-instru_mul = 0x20,	
-instru_mla = 0x21,	//type 2
-	
-instru_ldr = 0x30,
-instru_str  = 0x31,	//type 3
-	
-instru_beq = 0,	// spec P16
-instru_bne = 1,	
-instru_bge = 10,
-instru_blt = 11,
-instru_bgt = 12,
-instru_ble = 13,
-instru_b  = 14,	//type 4
+enum instruction_cMd {//Instr_Table[line][2]
+    AND = 0,
+    EOR = 1,
+    SUB = 2,
+    RSB = 3,
+    ADD = 4,
+    TST = 8, 
+    TEQ = 9, 
+    CMP = 10,
+    ORR = 12,
+    MOV = 13, // type 1
 
-instru_ANDEQ  = 0x50,//type 5
-instru_lsl =0x51,
+    INSTRU_MUL = 0x20,
+    INSTRU_MLA = 0X21,//type 2
+
+    INSTRU_LDR = 0x30,
+    INSTRU_STR = 0x31,//type 3
+
+    INSTRU_BEQ = 0,
+    INSTRU_BNE = 1,
+    INSTRU_BGE = 10,
+    INSTRU_BLT = 11,
+    INSTRU_BGT = 12,
+    INSTRU_BLE = 13,
+    INSTRU_B = 14,//type 4
+
+    INSTRU_ANDEQ = 0x50,//type 5
+    INSTRU_LSL = 0x51,
 };
 
 //the word(positive number, negetaive number)'s type
 //will be easier to be sorted in different cases
-enum typ_Number {
-Num_pound = 0,						//No3_paragraph fist char is # 	Instr_Table[line][4]
-Num_pound_negative = 1,					//No3_paragraph fist char is  #-
-Num_EQ = 2,							//No3_paragraph fist char is  =
+enum typ_Number { 
+    NUM_POUND = 0, 
+    NUM_POUND_NEGATIVE = 1,
+    NUM_EQ = 2,
 
-Num_r = 3,							//No3_paragraph fist char is  R
+    NUM_R = 3,
 
-Num_bracket_r = 4,					//No3_paragraph fist char is [Rn],
-Num_bracket_pound = 5,				//No3_paragraph fist char is  [Rn,<#expression>], 
-Num_bracket_pound_negative = 6,		//No3_paragraph fist char is  [Rn,<#expression>], 
-Num_bracket_lsr_pound = 7,			//No3_paragraph fist char is  [ lsr #
-Num_bracket_lsr_r = 8,			//No3_paragraph fist char is  [ lsr r
-Num_bracket_end_pound = 9,				//No3_paragraph fist char is  [Rn],#expression,
-Num_bracket_end_pound_negative = 10,		//No3_paragraph fist char is  [Rn],#-expression
-Num_bracket_x = 11,
+    NUM_BRACKET_R = 4,
+    NUM_BRACKET_POUND = 5,
+    NUM_BRACKET_POUND_NEGATIVE = 6,
+    NUM_BRACKET_LSR_POUND = 7,
+    NUM_BRACKET_LSR_R = 8,
+    NUM_BRACKET_END_POUND = 9,
+    NUM_BRACKET_END_POUND_NEGATIVE = 10,
+    NUM_BRACKET_X = 11,
 
-Num_r_lsr_r = 0x10,							// r lsr r
-Num_r_lsr_pound = 0x11,							// r lsr #
+    NUM_R_LSR_R = 0x10,
+    NUM_R_LSR_POUND = 0x11,
 
-Has_lsr = 1,
-Has_bracket_lsr = 2,		//No3_paragraph Has lsr  		Instr_Table[line][9]
+    HAS_LSR = 1,
+    HAS_BRACKET_LSR = 2,
 };
 
 //the 4-bit 'cond', as mentioned in the spec(a 4 bit number)
-enum instr_Cond{
-beq = 0,	// spec P4
-bne = 1,	
-bge = 10,
-blt = 11,
-bgt = 12,
-ble = 13,
-always  = 14,	//type 4
-};
+enum instr_Cond {
+    BEQ = 0,
+    BNE = 1,
+    BGE = 10,
+    BLT = 11,
+    BGT = 12,
+    BLE = 13,
+    ALWAYS = 14, //type 4
 
+};
