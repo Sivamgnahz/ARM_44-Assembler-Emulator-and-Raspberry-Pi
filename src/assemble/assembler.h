@@ -1,6 +1,11 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "bit_field.h"
+
 int main();
 int Read_from_file(char argv[]); //read every character from the file and transfer its register, value... into the table
-int analysis_First_paragraph(int line); //analyse the first word in the instruction, i.e. mov, add, sub,...
+int analysis_first_word(int line); //analyse the first word in the instruction, i.e. mov, add, sub,...
 //because normally every instruction begin with 3 characters
 void analysis_last_label(int line);
 //label case
@@ -11,32 +16,32 @@ void analysis_b_label(int line);//b foo:
 void analysis_bxx_label(int line);
 //label with the form of bxx
 
-void analysis_No2_paragraph(int line);
+void analysis_second_word(int line);
 //analysis the second  'word' in a normal instruction: it must be a register 
 
-void analysis_No3_paragraph(int line);
+void analysis_third_word_and_after(int line);
 //consider all the word after the second word ...(many different cases)
 
-void analysis_No3_pound(int line);//#
+void analysis_third_word_as_number(int line);//#
 //store a number(if the word is a number)
 
-int analysis_No3_10hexnumber(int line);//#1
+int analysis_number_10_or_16_based(int line);//#1
 //transfer a number into the table(if its a ten based number)
 
-int analysis_No3_16hexnumber(int line);//#0x
+int analysis_16_based_help_func(int line);//#0x
 //transfer a number into the table(if its a hex based number)
 
-void data_processing(int line);
+void data_processing(int line, instruction *instr);
 //store an instruction as an instruct from the table
 //by extract every useful block for this instruction 
 
-void branch(int line);
+void branch(int line, instruction *instr);
 //same as above
 
-void single_data_transfer(int line);
+void single_data_transfer(int line, instruction *instr);
 //same as above
 
-void multiply(int line);
+void multiply(int line, instruction *instr);
 //same as above
 
 //instrution table
@@ -52,7 +57,8 @@ void multiply(int line);
 //9:Lsr
 //10:total number of registers except the first one
 
-//instruction type, will be stotred in the table(easy and faster)
+//first pass second column ---instruction type
+
 enum instruction_type {
     INSTRUTYPE_DATA_PROCESSING = 1,
     INSTRUTYPE_MULTIPLY = 2,
@@ -62,9 +68,7 @@ enum instruction_type {
     INSTRUTYPE_LABEL = 6,
 };
 
-//the specific instruction type for data processing
-//will be stored if the instruction is a data processing type 
-//or a multiple instruction(but didnt use it)
+//first pass third coloumn ---specific type when it is data processing or multiply
 enum instruction_cMd {//Instr_Table[line][2]
     AND = 0,
     EOR = 1,
@@ -95,8 +99,7 @@ enum instruction_cMd {//Instr_Table[line][2]
     INSTRU_LSL = 0x51,
 };
 
-//the word(positive number, negetaive number)'s type
-//will be easier to be sorted in different cases
+//first pass fifth column
 enum typ_Number { 
     NUM_POUND = 0, 
     NUM_POUND_NEGATIVE = 1,

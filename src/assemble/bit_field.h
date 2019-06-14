@@ -1,9 +1,15 @@
 #define uint32_t unsigned int
-
 #define SEARCH_LABEL_LENGTH_OF_CHAR 6
 #define TOTAL_LABEL_LINE_NUM_BUFFER 90
 #define INITIAL_VALUE 0xffffffff
 #define ZERO_VALUE 0x00000000
+#define CHANGE_TO_INT 0x30
+#define HEX_HELP 0x37
+#define HEX_HELP_2 0x57
+#define BIT_MASK_OFFSET_ONE 0x00000fff //bit11-0
+#define BIT_MASK_OFFSET_TWO 0x007fffff //bit22--0
+#define NEW_LINE_CHAR 0x0a
+#define COLON 0x3a
 
 typedef union {
   uint32_t instr_32bits;
