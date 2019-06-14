@@ -162,7 +162,7 @@ int Read_from_file(char argv[]) {
 
     }
 
-  printf("Line0    Inst_ty1 ins_cMd2 Rn3      typ_Num4 Number5  Rd6      Rs7      Rm8      Lsr9     registers_in_no3_paragraph_but_not_in_bracket\n");
+  printf("Line0    Inst_ty1 ins_cMd2 Rn/Rd3   typ_Num4 Number5  Rd/Rn6   Rs7      Rm8      Lsr9     reg_num\n");
   for (i = 0; i < TOTAL_LABEL_LINE_NUM_BUFFER; i++) {
     for (j = 0; j < 11; j++)
       printf("%08x ", instr_table[i][j]);

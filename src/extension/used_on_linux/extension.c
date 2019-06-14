@@ -2,7 +2,7 @@
 #define MAX_LENGTH 1000
 
 int main(int argc, char *argv[]){
-    char *answer;
+    char answer[1];
     char sentence[MAX_LENGTH];
     char str[] = "SOSx";
 
