@@ -1,4 +1,4 @@
-#include "bit_field.h"
+
 #include "emulate.h"
 
 uint8_t memory[65536] = {0};  //initialise to 0, store instructions and data
@@ -463,17 +463,3 @@ uint32_t build_mask(uint32_t value_masked, uint32_t start_point, uint32_t length
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
- 

@@ -1,8 +1,7 @@
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <stdint.h>
+#include "bit_field.h"
 
 #define DATA_LENGTH 32
 
@@ -48,10 +47,6 @@ instruction readInstruction();
 int if_in_pin_area(uint32_t memory_address);
 int if_in_control_area(uint32_t memory_address);
 void clear_pin();
-
-
-
-
 
 
 

@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define ZERO_VALUE 0x00000000
+
 typedef union {
   uint32_t CPSR_32bits;
   struct {
