@@ -67,6 +67,7 @@ int main(int argc, char * argv[]) {
       printf(" will write 0x%08x to file fpw   !\n", instr->instr_32bits);
       fwrite(instr, 4, 1, fpw);
     }
+    free(instr);
   }
 
 
