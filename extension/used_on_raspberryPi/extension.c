@@ -1,14 +1,20 @@
 #include "extension.h"
 #define MAX_LENGTH 1000
 
+
+int sos = 0;
+
 int main(int argc, char *argv[]){
     char answer[1];
     char sentence[MAX_LENGTH];
     char str[] = "SOSx";
 
     wiringPiSetup();
-	pinMode(LED, OUTPUT);
-
+    pinMode(LED, OUTPUT);
+    pinMode(SOS_SIGNAL, OUTPUT);
+    
+    digitalWrite(SOS_SIGNAL, HIGH);
+    
     SOS_wrong: //whether SOS emergency
     printf("================\n");
     printf("SOS? y/n\n");
@@ -57,9 +63,10 @@ int main(int argc, char *argv[]){
     printf("Your sentence is: %s\n", sentence);
  
 
-    SOS:
+    SOS:  
+    sos = 1;
     read_sentence(sentence); //main function to be run
-
+    
     CONVERT_wrong: //play again or not
     printf("Want to convert another sentence? y/n \n");
     scanf("%s",answer);
@@ -88,7 +95,7 @@ int main(int argc, char *argv[]){
 
     End:
     printf("Thanks for your using.\n");
-
+    digitalWrite(SOS_SIGNAL, LOW);
     return 0;
 }
 
@@ -261,3 +268,12 @@ void pause_medium() {
 	delay(600);
 }
 
+void sos_light() {
+    while(1){
+        if(sos) {
+            printf("sos!!!\n");
+            digitalWrite(SOS_SIGNAL, HIGH);
+        }
+        delay(600);
+    }
+}

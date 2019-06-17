@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <wiringPi.h>
 #define LED 1
+#define SOS_SIGNAL 2
+
 
 int main(int argc, char *argv[]);
 int filter(char letter);//extract letter and number only
@@ -22,6 +24,8 @@ void dit();
 void dah();
 void pause_short();
 void pause_medium();
+
+void sos_light();
 
 enum char_type{
     LOWER_LETTER = 0,
