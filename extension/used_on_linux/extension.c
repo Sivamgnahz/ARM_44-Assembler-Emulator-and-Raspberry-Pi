@@ -115,6 +115,7 @@ void read_sentence(char* sentence){
         } else if(type==NORMAL_SYMBOL){
             if(filter(previous)!= NORMAL_SYMBOL){
                 morse_code = symbol_to_morse(ch);
+                printf("Character '%c' has been converted successfully.\n", ch);
             }
         } else if(type==OTHERS){
             printf("The character:%c is not in the list. It will be ignored.\n", ch);
